@@ -1,0 +1,20 @@
+services:
+  gitea:
+    image: gitea/gitea:latest
+    container_name: helpdesk-gitea
+    ports:
+      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:222:22"
+    volumes:
+      - ./data/gitea:/data
+      - ./data/gitea/ssh:/home/git/.ssh
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+      - SSH_PORT=222
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

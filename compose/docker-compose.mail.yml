@@ -1,0 +1,24 @@
+services:
+  postal:
+    image: postalhub/postal:latest
+    container_name: helpdesk-postal
+    ports:
+      - "127.0.0.1:5000:5000"
+    volumes:
+      - ./data/postal:/var/lib/postal
+    environment:
+      POSTAL_SMTP_HOST: helpdesk.local
+      POSTAL_WEB_HOST: helpdesk.local
+      POSTAL_DATABASE_URL: sqlite:////var/lib/postal/db.sqlite3
+      POSTAL_REDIS_HOST: helpdesk-postal-redis
+      POSTAL_LOG_LEVEL: info
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    container_name: helpdesk-postal-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - ./data/postal-redis:/data
+    restart: unless-stopped
