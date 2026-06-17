@@ -1,0 +1,22 @@
+[Unit]
+Description=llama.cpp server
+After=network-online.target
+
+[Service]
+Type=simple
+User=hermes
+WorkingDirectory=/opt/llama.cpp
+ExecStart=/opt/llama.cpp/bin/llama-server \
+  --model /opt/llama.cpp/models/qwen2.5-7b-instruct-q4_k_m.gguf \
+  --port 8080 \
+  --host 127.0.0.1 \
+  --ctx-size 65536 \
+  --n-gpu-layers 0 \
+  --parallel 1 \
+  --embedding)
+Restart=always
+RestartSec=3
+Environment="LLAMA_LOG_LEVEL=info"
+
+[Install]
+WantedBy=multi-user.target

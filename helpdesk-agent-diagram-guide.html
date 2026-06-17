@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Self-Hosted Help Desk Agent — Architecture & Guide</title>
+<style>
+  :root {
+    --bg: #0b0c10;
+    --panel: #1f2833;
+    --text: #c5c6c7;
+    --cyan: #66fcf1;
+    --cyan-dim: #45a29e;
+    --red: #ff2e63;
+    --yellow: #fce38a;
+    --green: #94fc13;
+    --border: #2a2f3a;
+  }
+  * { box-sizing: border-box; }
+  html, body { background: var(--bg); color: var(--text); font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; line-height: 1.55; }
+  a { color: var(--cyan); text-decoration: none; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 28px 20px 60px; }
+  h1 { color: var(--cyan); font-size: 1.9rem; margin-bottom: 4px; }
+  h2 { color: var(--cyan); font-size: 1.4rem; margin-top: 28px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+  h3 { color: var(--yellow); font-size: 1.1rem; margin-top: 20px; }
+  .lead { color: #9aa3ad; font-size: 1.05rem; margin-bottom: 22px; }
+
+  /* Diagram */
+  .diagram-wrap { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 22px; margin: 22px 0; overflow-x: auto; }
+  .layer { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .layer-label { width: 100%; text-align: center; color: var(--cyan-dim); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.12em; margin: 6px 0 2px; }
+  .node { background: #0b0c10; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; min-width: 140px; max-width: 220px; text-align: center; color: var(--text); }
+  .node.user { border-color: var(--yellow); }
+  .node.channel { border-color: var(--cyan); }
+  .node.core { border-color: var(--red); }
+  .node.service { border-color: var(--green); }
+  .node.infra { border-color: #778ca3; }
+  .node strong { display: block; color: var(--cyan); font-size: 0.95rem; margin-bottom: 2px; }
+  .node.channel strong { color: var(--cyan); }
+  .node .note { font-size: 0.75rem; color: #8b95a0; margin-top: 6px; }
+  .arrow { width: 2px; height: 14px; background: #2a2f3a; margin: 0 auto; }
+
+  /* Panels */
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin: 14px 0; }
+  .panel .meta { color: var(--cyan-dim); font-size: 0.8rem; margin-top: 6px; }
+  code { background: #0b0c10; padding: 2px 6px; border-radius: 4px; color: var(--yellow); font-size: 0.9em; }
+  pre { background: #0b0c10; border: 1px solid var(--border); border-radius: 10px; padding: 14px; overflow-x: auto; color: #d8d8d8; font-size: 0.88rem; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 760px) { .grid-2 { grid-template-columns: 1fr; } }
+  ul { padding-left: 18px; }
+  li { margin: 6px 0; }
+  .tag { display: inline-block; background: #0b0c10; border: 1px solid var(--border); padding: 3px 8px; border-radius: 6px; font-size: 0.78rem; color: var(--cyan-dim); margin: 2px 3px; }
+  .status { display: inline-block; width: 10px; height: 10px; border-radius: 999px; background: var(--green); box-shadow: 0 0 10px var(--green); }
+  .nav { display: flex; gap: 10px; flex-wrap: wrap; margin: 14px 0; }
+  .nav a { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 0.88rem; }
+  .nav a:hover { border-color: var(--cyan); }
+  .collapse { border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; margin: 10px 0; background: var(--panel); cursor: pointer; }
+  .collapse + .hidden { display: none; }
+  .hidden.open { display: block; }
+  .callout { border-left: 3px solid var(--yellow); padding: 10px 14px; background: #14202b; border-radius: 0 8px 8px 0; margin: 12px 0; }
+  .kbd { background: #0b0c10; border: 1px solid var(--border); padding: 2px 6px; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Ubuntu Mono, monospace; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 0.92rem; }
+  th { color: var(--cyan); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <h1>🔧 Self-Hosted Help Desk Agent</h1>
+  <p class="lead">Architecture + implementation guide for a free, self-hosted Hermes Agent help desk on a 4–8 GB / 4 vCPU VM with no GPU.</p>
+
+  <div class="nav">
+    <a href="#hero-scenario">Scenario</a>
+    <a href="#hero-vm">VM Setup</a>
+    <a href="#hero-arch">Architecture Diagram</a>
+    <a href="#hero-stack">Stack</a>
+    <a href="#hero-osticket">osTicket</a>
+    <a href="#hero-memory">Memory</a>
+    <a href="#hero-model">Model</a>
+    <a href="#hero-security">Security</a>
+    <a href="#hero-ops">Operations</a>
+    <a href="#hero-checklist">Checklist</a>
+  </div>
+
+  <div id="hero-scenario" class="panel">
+    <strong style="color:var(--cyan);">Scenario</strong>
+    <div class="meta">Goal: public help desk agent that talks to users on Telegram / WhatsApp / iMessage, creates tickets, answers queries, and uses only self-hosted/free tools.</div>
+    <ul>
+      <li>Primary channels: Telegram, WhatsApp, optional iMessage</li>
+      <li>Core behavior: ticket creation/updates, search, how-tos, triage</li>
+      <li>Constraints: no GPU, 4–8 GB RAM, 4 vCPU, fully self-hosted/free where possible</li>
+      <li>Non-negotiable: security, stability, sanity checks around public access</li>
+    </ul>
+  </div>
+
+  <div id="hero-vm" class="panel">
+    <strong style="color:var(--cyan);">Reference VM Build</strong>
+    <div class="meta">Recommended starting point</div>
+    <table>
+      <tr><th>Component</th><th>Recommendation</th><th>Why</th></tr>
+      <tr><td>CPU / RAM</td><td>4 vCPU, 8 GB RAM</td><td>Headroom for Hermes + DB + search + proxies</td></tr>
+      <tr><td>Disk</td><td>40 GB+ SSD</td><td>DB + logs + models + repo</td></tr>
+      <tr><td>OS</td><td>Ubuntu 24.04 LTS</td><td>Broad tooling support</td></tr>
+      <tr><td>Domain</td><td>Yes, point DNS to VM</td><td>Reliable Telegram/WhatsApp webhooks over HTTPS</td></tr>
+      <tr><td>Reverse proxy</td><td>Nginx or Caddy</td><td>TLS termination, path-based routing</td></tr>
+      <tr><td>DB</td><td>SQLite (default) / PostgreSQL optional</td><td>Lower ops overhead, good enough to start</td></tr>
+    </table>
+  </div>
+
+  <div id="hero-arch" class="diagram-wrap">
+    <div class="layer-label">User Layer</div>
+    <div class="layer">
+      <div class="node user"><strong>End user</strong><div class="note">“I need help with X”</div></div>
+    </div>
+    <div class="arrow"></div>
+
+    <div class="layer-label">Channel Layer</div>
+    <div class="layer">
+      <div class="node channel"><strong>Telegram</strong><div class="note">BotFather bot / webhook</div></div>
+      <div class="node channel"><strong>WhatsApp</strong><div class="note">baileys / whatsapp-web.js session</div></div>
+      <div class="node channel"><strong>iMessage</strong><div class="note">macOS relay recommended</div></div>
+    </div>
+    <div class="arrow"></div>
+
+    <div class="layer-label">Orchestration Layer</div>
+    <div class="layer">
+      <div class="node core"><strong>Hermes Agent</strong><div class="note">FastAPI + workers + memory + tool routing</div></div>
+    </div>
+    <div class="arrow"></div>
+
+    <div class="layer-label">Service Layer</div>
+    <div class="layer">
+      <div class="node service"><strong>SearXNG</strong><div class="note">Self-hosted web search</div></div>
+      <div class="node service"><strong>KB / Wiki</strong><div class="note">Markdown docs, how-tos</div></div>
+      <div class="node service"><strong>Ticketing</strong><div class="note">SQLite-native or Zammad/osTicket API</div></div>
+      <div class="node service"><strong>Memory</strong><div class="note">Conversation + ticket state</div></div>
+    </div>
+    <div class="arrow"></div>
+
+    <div class="layer-label">Infrastructure Layer</div>
+    <div class="layer">
+      <div class="node infra"><strong>VM (4 vCPU / 8 GB)</strong><div class="note">systemd units, Nginx, TLS</div></div>
+      <div class="node infra"><strong>Nginx / Caddy</strong><div class="note">HTTPS, routing</div></div>
+      <div class="node infra"><strong>OS Security</strong><div class="note">UFW + fail2ban + apparmor</div></div>
+    </div>
+  </div>
+
+  <div id="hero-stack" class="panel">
+    <strong style="color:var(--cyan);">Stack: Recommended vs Alternatives</strong>
+    <div class="meta">Start simple, grow as needed</div>
+    <table>
+      <tr><th>Area</th><th>Recommended default</th><th>Alternative</th></tr>
+      <tr><td>Messaging</td><td>Telegram first</td><td>Whatsapp via baileys (higher ops risk)</td></tr>
+      <tr><td>Ticketing</td><td>Hermes-native SQLite “ticket tool”</td><td>Zammad or osTicket via API</td></tr>
+      <tr><td>Search</td><td>SearXNG</td><td>Single DuckDuckGo scraper (weaker)</td></tr>
+      <tr><td>KB</td><td>Local markdown + ripgrep/Whoosh</td><td>Static web wiki</td></tr>
+      <tr><td>Model runtime</td><td>Remote API or small quantized model</td><td>Local LLM (heavy CPU)</td></tr>
+      <tr><td>Auth/Rate limit</td><td>Allowlist + per-user rate limiting</td><td>OTP / invite codes</td></tr>
+    </table>
+  </div>
+
+  <div id="hero-osticket" class="panel">
+    <strong style="color:var(--cyan);">osTicket Integration</strong>
+    <div class="meta">Wire osTicket into Hermes via its REST API.</div>
+    <pre><code># Hermes config
+tools:
+  osticket:
+    base_url: "https://helpdesk.your-domain.com"
+    api_key: "YOUR_OSTICKET_API_KEY"
+    default_dept_id: 1
+    default_priority: "low"
+    rate_limit_per_min: 5</code></pre>
+    <h3>Tool calls</h3>
+    <ul>
+      <li><code>create_ticket(user, issue, priority, channel)</code></li>
+      <li><code>update_ticket(ticket_id, status, note)</code></li>
+      <li><code>search_tickets(query)</code></li>
+      <li><code>close_ticket(ticket_id)</code></li>
+    </ul>
+    <h3>PII rules</h3>
+    <ul>
+      <li>Never auto-attach full Telegram metadata. Keep your own mapping if needed.</li>
+      <li>Strip URLs, scripts, and prompt-like text from ticket bodies.</li>
+      <li>Confirm before creating external tickets.</li>
+      <li>Rate-limit per user to avoid spam.</li>
+    </ul>
+  </div>
+
+  <div id="hero-memory" class="panel">
+    <strong style="color:var(--cyan);">Self-Hosted Memory</strong>
+    <div class="meta">Use SQLite + llama.cpp embeddings, no cloud services.</div>
+    <h3>Recommended</h3>
+    <table>
+      <tr><th>Option</th><th>Best for</th></tr>
+      <tr><td>SQLite</td><td>Small helpdesk, simple setup</td></tr>
+      <tr><td>PostgreSQL + pgvector</td><td>Multi-user, semantic ticket search</td></tr>
+    </table>
+    <h3>Config</h3>
+    <pre><code>memory:
+  backend: sqlite
+  url: sqlite:////opt/hermes/data/memory.sqlite3
+  embed_endpoint: http://127.0.0.1:8080/embedding
+  embed_model: qwen2.5-7b-instruct-q4_k_m</code></pre>
+    <h3>Hygiene</h3>
+    <ul>
+      <li>Separate per-user short-term memory from global ticket memory.</li>
+      <li>Never merge them.</li>
+      <li>Scrub old threads via cron.</li>
+    </ul>
+  </div>
+
+  <div id="hero-model" class="panel">
+    <strong style="color:var(--cyan);">Best Free 64k-Context Model</strong>
+    <div class="meta">Pick one path, based on your VM RAM. The rule I use: 64k context is doable if the working set fits with system overhead.</div>
+    <div class="callout"><strong style="color:var(--yellow);">Hard rule</strong><br>64k context needs more memory than 32k. The same model file uses noticeably more RAM at 64k than at 32k.</div>
+    <table>
+      <tr><th>Path</th><th>Model</th><th>RAM needed</th><th>Strength</th></tr>
+      <tr><td><strong>4 GB / 4 vCPU</strong></td><td>Qwen2.5-3B-Instruct Q4_K_M</td><td>~2 GB model + ~1 GB system = fits</td><td>Fastest, lowest OOM risk</td></tr>
+      <tr><td><strong>8 GB / 4 vCPU</strong></td><td>Qwen2.5-7B-Instruct Q4_K_M</td><td>~4–5 GB model + ~1 GB system = fits</td><td>Better reasoning, structured output, tool use</td></tr>
+      <tr><td><strong>Optional</strong></td><td>Phi-3.5 Mini Q4_K_M</td><td>~2.3 GB</td><td>Fastest, best when you need more headroom</td></tr>
+    </table>
+    <h3>llama.cpp server systemd unit (64k)</h3>
+    <pre><code>[Unit]
+Description=llama.cpp server
+After=network-online.target
+
+[Service]
+Type=simple
+User=hermes
+WorkingDirectory=/opt/llama.cpp
+ExecStart=/opt/llama.cpp/bin/llama-server \
+  --model /opt/llama.cpp/models/CHANGE_ME.gguf \
+  --port 8080 \
+  --host 127.0.0.1 \
+  --ctx-size 65536 \
+  --n-gpu-layers 0 \
+  --parallel 1 \
+  --embedding
+Restart=always
+RestartSec=3
+Environment="LLAMA_LOG_LEVEL=info"
+
+[Install]
+WantedBy=multi-user.target</code></pre>
+    <h3>Hermes config for llama.cpp</h3>
+    <pre><code>model:
+  provider: llama_cpp
+  name: REPLACE_MODEL_NAME
+  base_url: http://127.0.0.1:8080
+  context_size: 65536
+  temperature: 0.2
+  max_tokens: 2048</code></pre>
+    <div class="meta">Tip: start with 64k set in config, then lower it only if you hit startup OOM. Check with <code class="kbd">journalctl -u llama-cpp-server -f</code>.</div>
+  </div>
+
+  <div id="hero-security" class="panel">
+    <strong style="color:var(--cyan);">Security Model</strong>
+    <div class="meta">This agent will be public-facing. Treat it like a shared service from day one.</div>
+    <div class="callout"><strong style="color:var(--yellow);">Hard rules</strong><br>Never run Hermes as root. Never expose internal APIs without auth and rate limiting. Never trust user input blindly.</div>
+    <ul>
+      <li><strong>Network:</strong> <span class="tag">UFW</span> deny all inbound except 22/80/443. Fail2ban on SSH.</li>
+      <li><strong>App:</strong> required token/start flow for Telegram users or phone-based allowlist. Rate limit per user.</li>
+      <li><strong>Tools:</strong> Hermes must only call its own tools and approved self-hosted services. No raw shell exec unless explicitly enabled.</li>
+      <li><strong>Input safety:</strong> strip or escape injected commands, limit message size, normalize whitespace.</li>
+      <li><strong>Logging:</strong> log every interaction to SQLite; never log secrets; rotate logs.</li>
+      <li><strong>Updates:</strong> keep base OS/Hermes deps updated; audit installed packages.</li>
+    </ul>
+  </div>
+
+  <div id="hero-ops" class="panel">
+    <strong style="color:var(--cyan);">Runbook Essentials</strong>
+    <div class="grid-2">
+      <div>
+        <h3>Onboarding</h3>
+        <pre><code># create venv
+python3.11 -m venv ~/hermes-venv
+source ~/hermes-venv/bin/activate
+
+# install Hermes
+git clone https://github.com/NousResearch/Hermes.git
+cd Hermes
+pip install -e .</code></pre>
+      </div>
+      <div>
+        <h3>Systemd</h3>
+        <pre><code>[Unit]
+Description=Hermes Agent
+After=network-online.target
+
+[Service]
+Type=simple
+User=hermes
+WorkingDirectory=/opt/hermes
+ExecStart=/opt/hermes/venv/bin/python main.py
+Restart=always</code></pre>
+      </div>
+    </div>
+    <div class="meta">Maintain quarterly restore test: snapshot VM, restore into fresh instance, verify ticket + search + messaging path works end-to-end.</div>
+  </div>
+
+  <div id="hero-checklist" class="panel">
+    <strong style="color:var(--cyan);">First-Run Checklist</strong>
+    <ul>
+      <li><input type="checkbox"> VM provisioned and SSH key-only access enabled</li>
+      <li><input type="checkbox"> UFW enabled (22/80/443 only)</li>
+      <li><input type="checkbox"> Domain + TLS via Let&rsquo;s Encrypt or Caddy</li>
+      <li><input type="checkbox"> Hermes installed + systemd unit running + logs clean</li>
+      <li><input type="checkbox"> Telegram bot configured and verified</li>
+      <li><input type="checkbox"> At least one ticket created and closed via agent</li>
+      <li><input type="checkbox"> SearXNG up and responding on a subpath</li>
+      <li><input type="checkbox"> Backup schedule for DB + configs defined and tested</li>
+      <li><input type="checkbox"> Emergency stop: command to disable public chat intake exists</li>
+    </ul>
+  </div>
+
+  <footer style="margin-top: 40px; color: #556070; font-size: 0.8rem;">
+    Generated for a self-hosted Hermes Agent help desk. Build: 2026-06-17
+  </footer>
+</div>
+</body>
+</html>

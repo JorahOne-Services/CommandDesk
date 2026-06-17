@@ -1,0 +1,35 @@
+app:
+  name: j1-helpdesk
+  transport: telegram
+  host: 127.0.0.1
+  port: 8000
+
+telegram:
+  bot_token: "REPLACE_WITH_TELEGRAM_BOT_TOKEN"
+  allowed_user_ids: []   # leave empty for allow-by-invite flow; otherwise fill
+
+model:
+  provider: llama_cpp
+  name: qwen2.5:7b-instruct-q4_k_m
+  base_url: http://127.0.0.1:8080
+  context_size: 65536
+  temperature: 0.2
+  max_tokens: 2048
+
+tools:
+  osticket:
+    base_url: "https://helpdesk.example.com"
+    api_key: "REPLACE_OSTICKET_API_KEY"
+    default_dept_id: 1
+    default_priority: "low"
+    rate_limit_per_min: 5
+  memory:
+    backend: sqlite
+    url: sqlite:////opt/hermes/data/memory.sqlite3
+    embed_endpoint: http://127.0.0.1:8080/embedding
+    embed_model: qwen2.5-7b-instruct-q4_k_m
+
+security:
+  input_max_chars: 4000
+  require_start_token: true
+  log_interactions: true

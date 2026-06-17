@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>J1 Helpdesk Admin Dashboard</title>
+<style>
+  :root{--bg:#0b0c10;--panel:#1f2833;--text:#c5c6c7;--cyan:#66fcf1;--cyan-dim:#45a29e;--red:#ff2e63;--yellow:#fce38a;--green:#94fc13;--border:#2a2f3a}
+  *{box-sizing:border-box}
+  html,body{background:var(--bg);color:var(--text);font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif;margin:0;padding:0;line-height:1.55}
+  .container{max-width:1200px;margin:0 auto;padding:28px 20px 60px}
+  h1{color:var(--cyan);font-size:1.9rem;margin-bottom:4px}
+  .lead{color:#9aa3ad;margin-bottom:22px}
+  table{width:100%;border-collapse:collapse;margin:12px 0}
+  th,td{text-align:left;padding:10px;border-bottom:1px solid var(--border);font-size:.92rem}
+  th{color:var(--cyan)}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px;margin:14px 0}
+  .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+  @media(max-width:860px){.grid{grid-template-columns:1fr}}
+  .kpi{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center}
+  .kpi .num{color:var(--yellow);font-size:1.6rem;font-weight:700}
+  .kpi .lbl{color:var(--cyan-dim);font-size:.8rem;margin-top:4px}
+  .up{color:var(--green)}
+  .down{color:var(--red)}
+  code{background:var(--bg);padding:2px 6px;border-radius:4px;color:var(--yellow);font-size:.9em}
+  pre{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;overflow-x:auto;color:#d8d8d8;font-size:.88rem}
+  .nav a{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:.88rem;color:var(--cyan);text-decoration:none;margin:2px;display:inline-block}
+  .nav a:hover{border-color:var(--cyan)}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>📊 J1 Helpdesk Admin Dashboard</h1>
+  <p class="lead">Live operational view for the self-hosted AI helpdesk agent.</p>
+
+  <div class="nav">
+    <a href="#overview">Overview</a>
+    <a href="#live-savings">Savings</a>
+    <a href="#pricing-model">Pricing Model</a>
+    <a href="#integration">Integration</a>
+    <a href="#cost-model">Cost Model</a>
+    <a href="#roadmap">Roadmap</a>
+  </div>
+
+  <div id="overview" class="panel">
+    <strong style="color:var(--cyan)">Overview</strong>
+    <div class="grid" style="margin-top:10px">
+      <div class="kpi"><div class="num" id="tickets-open">0</div><div class="lbl">Tickets Open</div></div>
+      <div class="kpi"><div class="num" id="tickets-closed">0</div><div class="lbl">Tickets Closed</div></div>
+      <div class="kpi"><div class="num" id="sessions">0</div><div class="lbl">User Sessions</div></div>
+      <div class="kpi"><div class="num" id="avg-response">0s</div><div class="lbl">Avg Response</div></div>
+      <div class="kpi"><div class="num up" id="monthly-savings">$0</div><div class="lbl">Monthly Saved</div></div>
+      <div class="kpi"><div class="num up" id="yearly-savings">$0</div><div class="lbl">Yearly Saved</div></div>
+    </div>
+  </div>
+
+  <div id="live-savings" class="panel">
+    <strong style="color:var(--cyan)">Live Price Comparison</strong>
+    <p class="lead">If this stack were replaced by common hosted AI APIs, here’s the equivalent estimated spend.</p>
+    <table>
+      <tr><th>Scenario</th><th>Equivalent Service</th><th>Pricing Basis</th><th>Monthly Estimate</th></tr>
+      <tr><td>LLM Inference (64k context)</td><td>OpenAI GPT-4o class</td><td>~$2.50 / 1M input + $10 / 1M output</td><td class="down">~$120–$240</td></tr>
+      <tr><td>Search API replacement</td><td>Bing Web Search / SerpAPI</td><td>~$5 / 1k queries</td><td class="down">~$25–$50</td></tr>
+      <tr><td>Embeddings / memory</td><td>OpenAI text-embedding-3-large</td><td>~$0.13 / 1M tokens</td><td class="down">~$3–$8</td></tr>
+      <tr><td>Telegram / WhatsApp bridge SaaS</td><td>Intercom / Zendesk / Twilio</td><td>seat + message fees</td><td class="down">~$80–$160</td></tr>
+      <tr><td>Hosted ticketing</td><td>Zendesk / Freshdesk</td><td>$19–$49 per agent / month</td><td class="down">~$60–$150</td></tr>
+      <tr><td><strong>Total hosted estimate</strong></td><td>—</td><td>—</td><td class="down"><strong>~$288–$608 / month</strong></td></tr>
+      <tr><td><strong>Self-hosted cost</strong></td><td>—</td><td>—</td><td class="up"><strong>$0 software + VM infra</strong></td></tr>
+      <tr><td><strong>Net monthly saved</strong></td><td>—</td><td>—</td><td class="up"><strong id="net-saved">$300–$600</strong></td></tr>
+    </table>
+  </div>
+
+  <div id="pricing-model" class="panel">
+    <strong style="color:var(--cyan)">Admin Pricing Model</strong>
+    <p class="lead">How the dashboard calculates <code>monthly saved</code>.</p>
+    <table>
+      <tr><th>Input / Metric</th><th>Source</th><th>Hosted Baseline</th></tr>
+      <tr><td>LLM requests</td><td>usage.log</td><td>open weights equivalent → GPT-4.1 / GPT-4o</td></tr>
+      <tr><td>Tokens in</td><td>llama.cpp prompt_eval</td><td>$2.50 / 1M</td></tr>
+      <tr><td>Tokens out</td><td>llama.cpp completion</td><td>$10 / 1M</td></tr>
+      <tr><td>Search calls</td><td>tool usage counter</td><td>$5 / 1k</td></tr>
+      <tr><td>Ticket channels</td><td>platform registry</td><td>Twilio / Intercom seat</td></tr>
+      <tr><td>Agents</td><td>admin users</td><td>$29/agent/mo</td></tr>
+    </table>
+  </div>
+
+  <div id="integration" class="panel">
+    <strong style="color:var(--cyan)">Ticket Platforms &amp; Email</strong>
+    <p class="lead">Extend Hermes with adapters so any platform is just a config change.</p>
+    <table>
+      <tr><th>Platform</th><th>Type</th><th>Status</th><th>Notes</th></tr>
+      <tr><td>osTicket</td><td>Ticketing</td><td>Implemented</td><td>REST API wrapper included</td></tr>
+      <tr><td>Zammad</td><td>Ticketing</td><td>Planned</td><td>REST API adapter</td></tr>
+      <tr><td>Thelia / GLPI</td><td>Ticketing</td><td>Planned</td><td>Community adapters</td></tr>
+      <tr><td>Email → Ticket</td><td>Ingestion</td><td>Planned</td><td>IMAP poller or IMAP IDLE bridge</td></tr>
+      <tr><td>Telegram</td><td>Twilio Channel</td><td>Planned</td><td>First-class channel</td></tr>
+      <tr><td>WhatsApp</td><td>Twilio Channel</td><td>Planned</td><td>Twilio sandbox or Meta Cloud</td></tr>
+      <tr><td>Slack / Discord</td><td>Channel</td><td>Optional</td><td>Extra bridge layer</td></tr>
+    </table>
+  </div>
+
+  <div id="cost-model" class="panel">
+    <strong style="color:var(--cyan)">Cost Model Code</strong>
+    <p class="lead">Drop-in formula for the dashboard live price counter.</p>
+    <pre><code># Example Python snippet for admin dashboard
+def compute_monthly_savings(prompts, completions, searches, agents=1):
+    llm = (prompts * 2.5 + completions * 10) / 1_000_000
+    search = searches * 0.005
+    seats = agents * 29
+    hosted = llm + search + seats + 80  # baseline ops/ticketing
+    return max(hosted, 0)
+
+def update_live():
+    usage = read_usage_log()
+    saved = compute_monthly_savings(
+        prompts=usage['tokens_in'],
+        completions=usage['tokens_out'],
+        searches=usage['search_calls'],
+        agents=usage['active_agents']
+    )
+    set_dom_text('#net-saved', f"${saved:,.0f}")</code></pre>
+  </div>
+
+  <div id="roadmap" class="panel">
+    <strong style="color:var(--cyan)">Next Implementation Steps</strong>
+    <ol>
+      <li>Add ticket platform registry (`ticket_platforms/registry.py`)</li>
+      <li>Implement `zammad_tool.py` and `email_ticket_tool.py`</li>
+      <li>Build admin FastAPI dashboard service with usage endpoints</li>
+      <li>Wire Hermes tool calls + usage logging into SQLite</li>
+      <li>Deploy admin dashboard at <code>/admin</code> behind auth</li>
+      <li>Push live cost calculations on every request + cron rollup</li>
+    </ol>
+  </div>
+
+  <footer style="margin-top:40px;color:#556070;font-size:.8rem">
+    J1 Helpdesk Admin Dashboard — generated: 2026-06-17
+  </footer>
+</div>
+</body>
+</html>
