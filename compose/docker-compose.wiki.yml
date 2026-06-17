@@ -1,0 +1,13 @@
+services:
+  outline:
+    image: outlinewiki/outline:latest
+    container_name: helpdesk-wiki
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - ./data/outline:/var/lib/outline
+    environment:
+      DATABASE_URL: sqlite:////var/lib/outline/outline.db
+      SECRET_KEY: ${OUTLINE_SECRET_KEY:-change-me}
+      UTILS_SECRET: ${OUTLINE_UTILS_SECRET:-change-me}
+    restart: unless-stopped

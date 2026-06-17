@@ -1,12 +1,23 @@
 # J1 Helpdesk Agent
-Self-hosted AI helpdesk with multi-platform ticketing, email-to-ticket support, and an admin dashboard that tracks live cost savings.
+
+<p align="center">
+  <strong>Self-hosted AI helpdesk with multi-platform ticketing, email-to-ticket, and a live cost-tracking admin dashboard.</strong><br>
+  100% local and free. Compatible with Hermes Agent and the broader agent-skills ecosystem.
+</p>
 
 ## Stack
 - Hermes Agent (AI orchestration)
 - llama.cpp server (local LLM, 64k context)
-- osTicket adapter (REST API)
+- osTicket / Zammad / email adapters via registry
 - SQLite (ticket state + memory)
 - Admin dashboard (HTML, cost tracker)
+
+## Self-hosted addons
+- `compose/docker-compose.selfhosted.yml` — STT, TTS, browser automation, honcho
+- `compose/docker-compose.knowledge.yml` — SearXNG search, Mathesar DB UI
+- `compose/docker-compose.wiki.yml` — Outline wiki
+- `compose/docker-compose.ci.yml` — CI validation
+- `compose/docker-compose.yml` — main app service
 
 ## Quick Start
 1. Place configs in `/opt/hermes/config.yaml` and `/opt/llama.cpp/models/your-model.gguf`
@@ -15,10 +26,11 @@ Self-hosted AI helpdesk with multi-platform ticketing, email-to-ticket support, 
 4. Open `admin/admin-dashboard.html`
 
 ## Repo layout
-- `helpdesk-agent-tools/` — core wrappers + systemd units + Hermes config
+- `ticket_platforms/` — registry + adapters (osTicket, Zammad, email)
+- `skills/manifest.yaml` — agent skill manifest
 - `helpdesk-agent-diagram-guide.html` — architecture guide
 - `admin/admin-dashboard.html` — admin cost/usage dashboard
-- `README.md` — this file
+- `compose/` — all self-hosted container stacks
 
 ## License
 MIT

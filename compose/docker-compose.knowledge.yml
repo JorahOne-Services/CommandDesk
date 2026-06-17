@@ -1,0 +1,18 @@
+services:
+  searxng:
+    image: searxng/searxng:latest
+    container_name: helpdesk-search
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - ./data/searxng:/etc/searxng
+    environment:
+      SEARXNG_BASE_URL: http://localhost:8080/
+    restart: unless-stopped
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    read_only: true
