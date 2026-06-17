@@ -330,6 +330,13 @@ adapter.sync_unread()</code></pre>
     </div>
     <div class="grid-2" style="margin-top:14px">
       <div>
+        <h3>Stack services</h3>
+        <pre><code>docker compose -f compose/docker-compose.yml up -d
+docker compose -f compose/docker-compose.selfhosted.yml up -d
+docker compose -f compose/docker-compose.knowledge.yml up -d
+docker compose -f compose/docker-compose.wiki.yml up -d</code></pre>
+      </div>
+      <div>
         <h3>Systemd</h3>
         <pre><code>[Unit]
 Description=Hermes Agent
@@ -341,12 +348,6 @@ User=hermes
 WorkingDirectory=/opt/hermes
 ExecStart=/opt/hermes/venv/bin/python main.py
 Restart=always</code></pre>
-      </div>
-      <div>
-        <h3>Maintenance</h3>
-        <pre><code>systemctl restart llama-cpp-server
-systemctl restart hermes-agent
-journalctl -u hermes-agent -f</code></pre>
       </div>
     </div>
     <div class="meta">Maintain quarterly restore test: snapshot VM, restore into fresh instance, verify ticket + search + messaging path works end-to-end.</div>
