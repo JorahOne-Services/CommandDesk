@@ -1,0 +1,64 @@
+services:
+  stt:
+    image: ghcr.io/openai/whisper:latest
+    container_name: helpdesk-stt
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./data/stt:/app/output
+    environment:
+      - MODEL=small
+      - TZ=UTC
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  tts:
+    image: ghcr.io/rhasspy/piper-tts:latest
+    container_name: helpdesk-tts
+    ports:
+      - "127.0.0.1:5000:5000"
+    volumes:
+      - ./data/tts:/app/output
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  browser:
+    image: zenika/alpine-chrome:124
+    container_name: helpdesk-browser
+    ports:
+      - "127.0.0.1:9222:9222"
+    shm_size: 2g
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9222/json/version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  honcho:
+    image: ghcr.io/openai/honcho:latest
+    container_name: helpdesk-honcho
+    ports:
+      - "127.0.0.1:8081:8080"
+    volumes:
+      - ./data/honcho:/app/data
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

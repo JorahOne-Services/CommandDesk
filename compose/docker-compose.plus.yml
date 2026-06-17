@@ -1,0 +1,60 @@
+services:
+  stt:
+    image: onerahmet/openai-whisper-asr-webservice:latest
+    container_name: helpdesk-stt
+    ports:
+      - "127.0.0.1:9000:9000"
+    volumes:
+      - ./data/stt:/app/output
+    environment:
+      - ASR_MODEL=small
+      - ASR_ENGINE=openai_whisper
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  tts:
+    image: ghcr.io/rhasspy/piper-tts:latest
+    container_name: helpdesk-tts
+    ports:
+      - "127.0.0.1:5000:5000"
+    volumes:
+      - ./data/tts:/app/output
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  browser:
+    image: zenika/alpine-chrome:124
+    container_name: helpdesk-browser
+    shm_size: 2g
+    ports:
+      - "127.0.0.1:9222:9222"
+    tmpfs:
+      - /tmp
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9222/json/version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  honcho:
+    image: ghcr.io/steipete/honcho:latest
+    container_name: helpdesk-honcho
+    ports:
+      - "127.0.0.1:8081:8080"
+    volumes:
+      - ./data/honcho:/app/data
+    environment:
+      - TZ=UTC
+      - HONCHO_PORT=8080
+    restart: unless-stopped
