@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>J1 Helpdesk Admin</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --border: #334155;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --accent: #60a5fa;
+            --green: #22c55e;
+            --yellow: #f59e0b;
+            --red: #ef4444;
+            --blue: #3b82f6;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding-bottom: 80px;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 1.1rem; font-weight: 600; }
+        .header .status {
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            color: var(--green);
+        }
+        .container { padding: 1rem; }
+
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            padding: 0.5rem 0;
+            z-index: 100;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.15rem;
+            color: var(--text-muted);
+            font-size: 0.65rem;
+            text-decoration: none;
+            padding: 0.25rem 0.75rem;
+            border-radius: 8px;
+            transition: color 0.2s;
+        }
+        .nav-item.active { color: var(--accent); }
+        .nav-item .icon { font-size: 1.25rem; }
+
+        /* Cards */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+        }
+        .metric-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+        .metric-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 0.75rem;
+            text-align: center;
+        }
+        .metric-value { font-size: 1.5rem; font-weight: 700; }
+        .metric-label { font-size: 0.65rem; color: var(--text-muted); margin-top: 0.15rem; }
+
+        /* Service List */
+        .service-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .service-item:last-child { border-bottom: none; }
+        .service-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .service-dot.green { background: var(--green); box-shadow: 0 0 6px var(--green); }
+        .service-dot.yellow { background: var(--yellow); }
+        .service-dot.red { background: var(--red); }
+        .service-name { font-size: 0.85rem; font-weight: 500; flex: 1; }
+        .service-meta { font-size: 0.65rem; color: var(--text-muted); }
+
+        /* Ticket Item */
+        .ticket-item {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .ticket-item:last-child { border-bottom: none; }
+        .ticket-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.25rem;
+        }
+        .ticket-id { font-size: 0.7rem; color: var(--accent); font-family: monospace; }
+        .ticket-status {
+            font-size: 0.6rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .status-open { background: #1e3a5f; color: var(--accent); }
+        .status-pending { background: #422006; color: var(--yellow); }
+        .status-closed { background: #14532d; color: var(--green); }
+        .ticket-subject { font-size: 0.85rem; font-weight: 500; }
+        .ticket-meta { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.15rem; }
+
+        /* Queue Badge */
+        .queue-badge {
+            background: var(--red);
+            color: white;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 0.1rem 0.4rem;
+            border-radius: 9999px;
+            min-width: 1.2rem;
+            text-align: center;
+        }
+
+        /* Section Title */
+        .section-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Button */
+        .btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            width: 100%;
+            text-align: center;
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        /* Tab Content */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Charts placeholder */
+        .chart-bar {
+            display: flex;
+            align-items: flex-end;
+            gap: 0.25rem;
+            height: 60px;
+            padding: 0.5rem 0;
+        }
+        .chart-bar .bar {
+            flex: 1;
+            background: var(--accent);
+            border-radius: 3px 3px 0 0;
+            min-height: 4px;
+            opacity: 0.8;
+        }
+        .chart-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.6rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🤖 J1 Helpdesk</h1>
+        <div class="status"><span class="service-dot green"></span> Online</div>
+    </div>
+
+    <div class="container">
+        <!-- Dashboard Tab -->
+        <div id="tab-dashboard" class="tab-content active">
+            <div class="metric-grid">
+                <div class="metric-card">
+                    <div class="metric-value">12</div>
+                    <div class="metric-label">Active Sessions</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" style="color:var(--yellow)">23</div>
+                    <div class="metric-label">Open Tickets</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">1.2M</div>
+                    <div class="metric-label">Tokens Today</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" style="color:var(--green)">$0.00</div>
+                    <div class="metric-label">Cost Today</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="section-title">📊 Tickets This Week</div>
+                <div class="chart-bar">
+                    <div class="bar" style="height:40%"></div>
+                    <div class="bar" style="height:65%"></div>
+                    <div class="bar" style="height:45%"></div>
+                    <div class="bar" style="height:80%"></div>
+                    <div class="bar" style="height:55%"></div>
+                    <div class="bar" style="height:90%"></div>
+                    <div class="bar" style="height:70%"></div>
+                </div>
+                <div class="chart-labels">
+                    <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="section-title">🔧 Service Health</div>
+                <div class="service-item">
+                    <div class="service-dot green"></div>
+                    <div class="service-name">llama.cpp</div>
+                    <div class="service-meta">6.2GB</div>
+                </div>
+                <div class="service-item">
+                    <div class="service-dot green"></div>
+                    <div class="service-name">Helpdesk Agent</div>
+                    <div class="service-meta">1.1GB</div>
+                </div>
+                <div class="service-item">
+                    <div class="service-dot green"></div>
+                    <div class="service-name">Admin Agent</div>
+                    <div class="service-meta">800MB</div>
+                </div>
+                <div class="service-item">
+                    <div class="service-dot green"></div>
+                    <div class="service-name">ChromaDB</div>
+                    <div class="service-meta">1.4GB</div>
+                </div>
+                <div class="service-item">
+                    <div class="service-dot green"></div>
+                    <div class="service-name">PostgreSQL</div>
+                    <div class="service-meta">400MB</div>
+                </div>
+                <div class="service-item">
+                    <div class="service-dot green"></div>
+                    <div class="service-name">Redis</div>
+                    <div class="service-meta">120MB</div>
+                </div>
+                <div class="service-item">
+                    <div class="service-dot green"></div>
+                    <div class="service-name">WhatsApp Webhook</div>
+                    <div class="service-meta">200MB</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tickets Tab -->
+        <div id="tab-tickets" class="tab-content">
+            <div class="card">
+                <div class="section-title">
+                    🎫 Open Tickets <span class="queue-badge">23</span>
+                </div>
+                <div class="ticket-item">
+                    <div class="ticket-header">
+                        <span class="ticket-id">#a1b2c3</span>
+                        <span class="ticket-status status-open">Open</span>
+                    </div>
+                    <div class="ticket-subject">Cannot access dashboard</div>
+                    <div class="ticket-meta">user@example.com · 2 min ago</div>
+                </div>
+                <div class="ticket-item">
+                    <div class="ticket-header">
+                        <span class="ticket-id">#d4e5f6</span>
+                        <span class="ticket-status status-pending">Pending</span>
+                    </div>
+                    <div class="ticket-subject">Billing invoice question</div>
+                    <div class="ticket-meta">john@company.com · 15 min ago</div>
+                </div>
+                <div class="ticket-item">
+                    <div class="ticket-header">
+                        <span class="ticket-id">#g7h8i9</span>
+                        <span class="ticket-status status-open">Open</span>
+                    </div>
+                    <div class="ticket-subject">Password reset not working</div>
+                    <div class="ticket-meta">jane@startup.io · 1 hour ago</div>
+                </div>
+                <div class="ticket-item">
+                    <div class="ticket-header">
+                        <span class="ticket-id">#j0k1l2</span>
+                        <span class="ticket-status status-closed">Closed</span>
+                    </div>
+                    <div class="ticket-subject">API rate limiting errors</div>
+                    <div class="ticket-meta">dev@tech.co · 3 hours ago</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Queue Tab -->
+        <div id="tab-queue" class="tab-content">
+            <div class="card">
+                <div class="section-title">👤 Human Queue <span class="queue-badge">2</span></div>
+                <div class="ticket-item">
+                    <div class="ticket-header">
+                        <span class="ticket-id">+1 555-0123</span>
+                        <span class="ticket-status status-open">Waiting 3m</span>
+                    </div>
+                    <div class="ticket-subject">Urgent: Production down</div>
+                    <div class="ticket-meta">Waiting for agent</div>
+                    <button class="btn" style="margin-top:0.5rem;">Take Over</button>
+                </div>
+                <div class="ticket-item">
+                    <div class="ticket-header">
+                        <span class="ticket-id">+1 555-0456</span>
+                        <span class="ticket-status status-pending">Waiting 8m</span>
+                    </div>
+                    <div class="ticket-subject">Need help with refund</div>
+                    <div class="ticket-meta">Waiting for agent</div>
+                    <button class="btn" style="margin-top:0.5rem;">Take Over</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="tab-settings" class="tab-content">
+            <div class="card">
+                <div class="section-title">⚙️ Configuration</div>
+                <div class="service-item">
+                    <div class="service-name">Rate Limit</div>
+                    <div class="service-meta">50 req/hour</div>
+                </div>
+                <div class="service-item">
+                    <div class="service-name">Session Duration</div>
+                    <div class="service-meta">2 hours</div>
+                </div>
+                <div class="service-item">
+                    <div class="service-name">Max Message Length</div>
+                    <div class="service-meta">4000 chars</div>
+                </div>
+                <div class="service-item">
+                    <div class="service-name">LLM Model</div>
+                    <div class="service-meta">qwen2.5-7b-instruct</div>
+                </div>
+                <div class="service-item">
+                    <div class="service-name">Ticket Platform</div>
+                    <div class="service-meta">osTicket + Freshdesk</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="section-title">🔌 MCP Servers</div>
+                <div class="service-item">
+                    <div class="service-dot green"></div>
+                    <div class="service-name">Freshdesk</div>
+                    <div class="service-meta">41 tools</div>
+                </div>
+                <div class="service-item">
+                    <div class="service-dot green"></div>
+                    <div class="service-name">osTicket</div>
+                    <div class="service-meta">Adapter</div>
+                </div>
+                <div class="service-item">
+                    <div class="service-dot yellow"></div>
+                    <div class="service-name">Slack</div>
+                    <div class="service-meta">Not configured</div>
+                </div>
+            </div>
+
+            <button class="btn btn-outline" onclick="alert('Restart requires docker compose restart')">🔄 Restart Services</button>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <a class="nav-item active" onclick="switchTab('dashboard')">
+            <span class="icon">📊</span>Dashboard
+        </a>
+        <a class="nav-item" onclick="switchTab('tickets')">
+            <span class="icon">🎫</span>Tickets
+        </a>
+        <a class="nav-item" onclick="switchTab('queue')">
+            <span class="icon">👤</span>Queue
+            <span class="queue-badge" style="position:absolute;top:2px;right:12px;font-size:0.55rem;">2</span>
+        </a>
+        <a class="nav-item" onclick="switchTab('settings')">
+            <span class="icon">⚙️</span>Settings
+        </a>
+    </div>
+
+    <script>
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + tab).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        // Register service worker for PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(() => {});
+        }
+    </script>
+</body>
+</html>

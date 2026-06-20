@@ -1,0 +1,77 @@
+{
+  "name": "Helpdesk - Satisfaction Survey",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "schedule-trigger",
+      "name": "Every 4 hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "interval": [{ "field": "cronExpression", "expression": "0 */4 * * *" }]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $.env.POSTGRES_URL }}",
+        "operation": "executeQuery",
+        "query": "SELECT t.id, t.user_id, t.subject FROM tickets t WHERE t.status = 'closed' AND t.closed_at >= NOW() - INTERVAL '4 hours' AND NOT EXISTS (SELECT 1 FROM audit_log a WHERE a.details->>'ticket_id' = t.id::text AND a.action = 'satisfaction_sent')"
+      },
+      "id": "find-closed-tickets",
+      "name": "Find Recently Closed Tickets",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [450, 300],
+      "additionalFields": {}
+    },
+    {
+      "parameters": {
+        "functionCode": "const tickets = $input.all();\nconst results = [];\nfor (const item of tickets) {\n  const ticket = item.json;\n  results.push({\n    json: {\n      user_id: ticket.user_id,\n      ticket_id: ticket.id,\n      subject: ticket.subject,\n      surveyMessage: `Hi! Your ticket *${ticket.subject}* was recently closed. How was your experience?\\n\\n⭐ Rate from 1-5:\\n1️⃣ Poor\\n2️⃣ Fair\\n3️⃣ Good\\n4️⃣ Great\\n5️⃣ Excellent`\n    }\n  });\n}\nreturn results;"
+      },
+      "id": "format-survey",
+      "name": "Format Survey Messages",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "channel": "#helpdesk-satisfaction",
+        "text": "={{ $json.surveyMessage }}"
+      },
+      "id": "send-survey",
+      "name": "Send Survey",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $.env.POSTGRES_URL }}",
+        "operation": "executeQuery",
+        "query": "INSERT INTO audit_log (session_id, action, details) VALUES (NULL, 'satisfaction_sent', $1::jsonb)"
+      },
+      "id": "mark-sent",
+      "name": "Mark Survey Sent",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [850, 450],
+      "additionalFields": {}
+    }
+  ],
+  "connections": {
+    "Every 4 hours": {
+      "main": [[{ "node": "Find Recently Closed Tickets", "type": "main", "index": 0 }]]
+    },
+    "Find Recently Closed Tickets": {
+      "main": [[{ "node": "Format Survey Messages", "type": "main", "index": 0 }]]
+    },
+    "Format Survey Messages": {
+      "main": [[{ "node": "Send Survey", "type": "main", "index": 0 }]]
+    },
+    "Send Survey": {
+      "main": [[{ "node": "Mark Survey Sent", "type": "main", "index": 0 }]]
+    }
+  }
+}
