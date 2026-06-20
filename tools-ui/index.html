@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J1 Helpdesk - Widget</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        h1 { margin-bottom: 1rem; color: #1a1a1a; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        .card { background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .card h2 { font-size: 1.1rem; margin-bottom: 1rem; color: #333; }
+
+        /* WhatsApp Widget Preview */
+        .whatsapp-widget { width: 100%; max-width: 400px; }
+        .wa-header { background: #075e54; color: white; padding: 1rem; border-radius: 12px 12px 0 0; display: flex; align-items: center; gap: 0.75rem; }
+        .wa-avatar { width: 40px; height: 40px; border-radius: 50%; background: #25d366; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+        .wa-name { font-weight: 600; }
+        .wa-status { font-size: 0.75rem; opacity: 0.8; }
+        .wa-body { background: #e5ddd5; padding: 1rem; min-height: 200px; max-height: 300px; overflow-y: auto; }
+        .wa-msg { background: white; border-radius: 8px; padding: 0.5rem 0.75rem; margin-bottom: 0.5rem; max-width: 85%; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .wa-msg.bot { margin-right: auto; }
+        .wa-msg.user { margin-left: auto; background: #dcf8c6; }
+        .wa-input { display: flex; padding: 0.75rem; background: white; border-radius: 0 0 12px 12px; border-top: 1px solid #ddd; }
+        .wa-input input { flex: 1; border: none; outline: none; padding: 0.5rem; font-size: 0.9rem; }
+        .wa-input button { background: #25d366; color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; }
+
+        /* Config Form */
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 0.25rem; color: #555; }
+        .form-group input, .form-group textarea { width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem; }
+        .form-group textarea { min-height: 80px; resize: vertical; }
+        .btn { background: #075e54; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem; }
+        .btn:hover { background: #0a7c6e; }
+        .btn-secondary { background: #ddd; color: #333; }
+        .btn-secondary:hover { background: #ccc; }
+
+        .code-block { background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 8px; font-family: 'Monaco', monospace; font-size: 0.8rem; overflow-x: auto; white-space: pre-wrap; }
+        .badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: 600; }
+        .badge-green { background: #d4edda; color: #155724; }
+        .badge-blue { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 J1 Helpdesk Widget</h1>
+        <p style="margin-bottom:2rem;color:#666;">Preview and configure the WhatsApp chat widget for your website.</p>
+
+        <div class="grid">
+            <div class="card">
+                <h2>📱 Live Preview</h2>
+                <div class="whatsapp-widget">
+                    <div class="wa-header">
+                        <div class="wa-avatar">🤖</div>
+                        <div>
+                            <div class="wa-name">J1 Support</div>
+                            <div class="wa-status">🟢 Online — Typically replies instantly</div>
+                        </div>
+                    </div>
+                    <div class="wa-body">
+                        <div class="wa-msg bot">👋 Welcome to J1 Support!<br><br>I can help you with:<br>🎫 Check your existing tickets<br>📝 Create a new ticket<br>👤 Talk to a human agent<br><br>What would you like to do?</div>
+                        <div class="wa-msg user">I need help with my account</div>
+                        <div class="wa-msg bot">I'd be happy to help! 🔍<br><br>To look up your tickets, please share your email address.</div>
+                    </div>
+                    <div class="wa-input">
+                        <input type="text" placeholder="Type your message..." readonly>
+                        <button>Send</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>⚙️ Configuration</h2>
+                <div class="form-group">
+                    <label>Helpdesk Agent URL</label>
+                    <input type="text" value="http://localhost:8080" readonly>
+                </div>
+                <div class="form-group">
+                    <label>WhatsApp Phone Number</label>
+                    <input type="text" placeholder="+1234567890">
+                </div>
+                <div class="form-group">
+                    <label>Welcome Message</label>
+                    <textarea>👋 Welcome to J1 Support!
+
+I can help you with:
+🎫 Check your existing tickets
+📝 Create a new ticket
+👤 Talk to a human agent
+
+What would you like to do?</textarea>
+                </div>
+                <div class="form-group">
+                    <label>Admin Phone Number (for takeover)</label>
+                    <input type="text" placeholder="+1234567890">
+                </div>
+                <button class="btn">Save Configuration</button>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top: 2rem;">
+            <h2>🔧 Embed Code</h2>
+            <p style="margin-bottom: 0.5rem; color: #666; font-size: 0.9rem;">Add this to your website HTML to enable the WhatsApp chat widget:</p>
+            <div class="code-block">&lt;!-- J1 Helpdesk Widget --&gt;
+&lt;script src="https://your-server.com/widget.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  J1Widget.init({
+    agentUrl: 'https://your-server.com',
+    phone: '+1234567890',
+    welcomeMessage: '👋 Welcome to J1 Support!',
+    theme: 'green'
+  });
+&lt;/script&gt;</div>
+        </div>
+
+        <div class="card" style="margin-top: 2rem;">
+            <h2>📊 Quick Stats</h2>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 1rem;">
+                <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                    <div style="font-size: 1.5rem; font-weight: 700; color: #075e54;">12</div>
+                    <div style="font-size: 0.75rem; color: #666;">Active Chats</div>
+                </div>
+                <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                    <div style="font-size: 1.5rem; font-weight: 700; color: #25d366;">47</div>
+                    <div style="font-size: 0.75rem; color: #666;">Tickets Resolved</div>
+                </div>
+                <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                    <div style="font-size: 1.5rem; font-weight: 700; color: #128c7e;">3.2s</div>
+                    <div style="font-size: 0.75rem; color: #666;">Avg Response</div>
+                </div>
+                <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                    <div style="font-size: 1.5rem; font-weight: 700; color: #1a1a1a;">2</div>
+                    <div style="font-size: 0.75rem; color: #666;">In Queue</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

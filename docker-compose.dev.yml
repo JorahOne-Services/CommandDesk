@@ -1,0 +1,47 @@
+version: "3.9"
+
+# Development override — merge with main: docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+
+services:
+  helpdesk-agent:
+    environment:
+      - LOG_LEVEL=DEBUG
+      - DEBUG=1
+    volumes:
+      - ./scripts:/app/scripts:ro
+      - ./config:/app/config:ro
+
+  admin-agent:
+    environment:
+      - LOG_LEVEL=DEBUG
+      - DEBUG=1
+    volumes:
+      - ./scripts:/app/scripts:ro
+      - ./config:/app/config:ro
+
+  llama:
+    ports:
+      - "0.0.0.0:8081:8081"  # Expose for development
+
+  whatsapp-webhook:
+    build:
+      context: .
+      dockerfile: Dockerfile.whatsapp
+    ports:
+      - "127.0.0.1:9090:9090"
+      - "0.0.0.0:8383:8383"  # WhatsApp HTTPS
+
+  health-monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./scripts:/app/scripts:ro
+      - ./config:/app/config:ro
+
+  tools-ui:
+    build:
+      context: tools-ui
+      dockerfile: Dockerfile
+    ports:
+      - "127.0.0.1:8484:8484"
