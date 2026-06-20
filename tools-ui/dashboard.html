@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>J1 Dev Ops Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-hover: #273548;
+            --border: #334155;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --accent: #60a5fa;
+            --green: #22c55e;
+            --yellow: #f59e0b;
+            --red: #ef4444;
+            --purple: #a78bfa;
+            --orange: #fb923c;
+            --pink: #f472b6;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        .header h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--accent), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .header-actions button {
+            background: var(--border);
+            border: none;
+            color: var(--text);
+            padding: 0.4rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+        .header-actions button:hover { background: var(--accent); }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            padding-bottom: 0.25rem;
+        }
+        .stat-chip {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: var(--bg);
+            padding: 0.4rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            border: 1px solid var(--border);
+        }
+        .stat-count {
+            font-weight: 700;
+            min-width: 1rem;
+            text-align: center;
+        }
+
+        /* Kanban Board */
+        .board {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            overflow-x: auto;
+            min-height: calc(100vh - 140px);
+            align-items: flex-start;
+        }
+        .column {
+            min-width: 300px;
+            max-width: 300px;
+            flex-shrink: 0;
+            background: var(--surface);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+        .column-header {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        .column-count {
+            background: var(--bg);
+            padding: 0.15rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.7rem;
+        }
+        .column-body {
+            padding: 0.5rem;
+            min-height: 100px;
+            max-height: calc(100vh - 220px);
+            overflow-y: auto;
+        }
+
+        /* Task Cards */
+        .card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .card:hover {
+            border-color: var(--accent);
+            transform: translateY(-1px);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+        .card-id {
+            font-family: 'Monaco', monospace;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+        }
+        .card-priority {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .priority-urgent { background: var(--red); box-shadow: 0 0 6px var(--red); }
+        .priority-high { background: var(--orange); }
+        .priority-normal { background: var(--accent); }
+        .priority-low { background: var(--green); }
+
+        .card-title {
+            font-size: 0.85rem;
+            font-weight: 500;
+            line-height: 1.3;
+            margin-bottom: 0.5rem;
+        }
+        .card-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+        .card-assignee {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .assignee-avatar {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.6rem;
+        }
+        .assignee-infra { background: #1e3a5f; color: var(--accent); }
+        .assignee-dev { background: #422006; color: var(--yellow); }
+        .assignee-qa { background: #450a0a; color: var(--red); }
+        .assignee-docs { background: #14532d; color: var(--green); }
+        .assignee-default { background: var(--border); color: var(--text-muted); }
+
+        .card-status-badge {
+            font-size: 0.6rem;
+            padding: 0.1rem 0.35rem;
+            border-radius: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .status-ready { background: #1e3a5f; color: var(--accent); }
+        .status-running { background: #422006; color: var(--yellow); }
+        .status-blocked { background: #450a0a; color: var(--red); }
+        .status-done { background: #14532d; color: var(--green); }
+        .status-todo { background: var(--border); color: var(--text-muted); }
+
+        /* Agent Activity Feed */
+        .activity-feed {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            padding: 0.75rem 1rem;
+            display: flex;
+            gap: 1rem;
+            overflow-x: auto;
+            z-index: 50;
+            font-size: 0.75rem;
+        }
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            white-space: nowrap;
+            color: var(--text-muted);
+        }
+        .activity-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            max-width: 600px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal h2 { margin-bottom: 1rem; font-size: 1.1rem; }
+        .modal-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.85rem;
+        }
+        .modal-label { color: var(--text-muted); }
+        .modal-value { font-weight: 500; }
+        .modal-close {
+            margin-top: 1rem;
+            width: 100%;
+            background: var(--border);
+            border: none;
+            color: var(--text);
+            padding: 0.75rem;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .modal-close:hover { background: var(--accent); }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .board { padding: 0.5rem; }
+            .column { min-width: 280px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-top">
+            <h1>🤖 J1 Dev Ops</h1>
+            <div class="header-actions">
+                <button onclick="refreshData()">⟳ Refresh</button>
+                <button onclick="showNewTask()">+ New Task</button>
+            </div>
+        </div>
+        <div class="stats-bar">
+            <div class="stat-chip"><span class="stat-count" id="count-ready">3</span> Ready</div>
+            <div class="stat-chip"><span class="stat-count" id="count-running">1</span> Running</div>
+            <div class="stat-chip"><span class="stat-count" id="count-blocked">0</span> Blocked</div>
+            <div class="stat-chip"><span class="stat-count" id="count-done">5</span> Done</div>
+            <div class="stat-chip" style="border-color:var(--accent);"><span class="stat-count" id="count-total">9</span> Total</div>
+        </div>
+    </div>
+
+    <!-- Kanban Board -->
+    <div class="board">
+        <!-- Ready Column -->
+        <div class="column">
+            <div class="column-header">
+                <span>📋 Ready</span>
+                <span class="column-count" id="col-ready-count">3</span>
+            </div>
+            <div class="column-body" id="col-ready">
+                <div class="card" onclick="showTaskDetail('t_f4a2b1c3')" data-id="t_f4a2b1c3">
+                    <div class="card-header">
+                        <span class="card-id">t_f4a2b1c3</span>
+                        <div class="card-priority priority-high"></div>
+                    </div>
+                    <div class="card-title">Add Freshdesk MCP server as Docker service</div>
+                    <div class="card-meta">
+                        <div class="card-assignee">
+                            <div class="assignee-avatar assignee-dev">D</div>
+                            agent-dev
+                        </div>
+                        <span class="card-status-badge status-ready">Ready</span>
+                    </div>
+                </div>
+                <div class="card" onclick="showTaskDetail('t_b7e5d2a1')" data-id="t_b7e5d2a1">
+                    <div class="card-header">
+                        <span class="card-id">t_b7e5d2a1</span>
+                        <div class="card-priority priority-normal"></div>
+                    </div>
+                    <div class="card-title">Write API documentation for WhatsApp webhook endpoints</div>
+                    <div class="card-meta">
+                        <div class="card-assignee">
+                            <div class="assignee-avatar assignee-docs">W</div>
+                            docs-writer
+                        </div>
+                        <span class="card-status-badge status-ready">Ready</span>
+                    </div>
+                </div>
+                <div class="card" onclick="showTaskDetail('t_c8d3e4f5')" data-id="t_c8d3e4f5">
+                    <div class="card-header">
+                        <span class="card-id">t_c8d3e4f5</span>
+                        <div class="card-priority priority-normal"></div>
+                    </div>
+                    <div class="card-title">Security audit: rate limiting bypass attempts</div>
+                    <div class="card-meta">
+                        <div class="card-assignee">
+                            <div class="assignee-avatar assignee-qa">Q</div>
+                            qa-reviewer
+                        </div>
+                        <span class="card-status-badge status-ready">Ready</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Running Column -->
+        <div class="column">
+            <div class="column-header">
+                <span>⚡ Running</span>
+                <span class="column-count" id="col-running-count">1</span>
+            </div>
+            <div class="column-body" id="col-running">
+                <div class="card" onclick="showTaskDetail('t_a1b2c3d4')" data-id="t_a1b2c3d4">
+                    <div class="card-header">
+                        <span class="card-id">t_a1b2c3d4</span>
+                        <div class="card-priority priority-urgent"></div>
+                    </div>
+                    <div class="card-title">Fix nginx SSL cert renewal for WhatsApp webhook</div>
+                    <div class="card-meta">
+                        <div class="card-assignee">
+                            <div class="assignee-avatar assignee-infra">I</div>
+                            infra-mgr
+                        </div>
+                        <span class="card-status-badge status-running">Running 2h</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Blocked Column -->
+        <div class="column">
+            <div class="column-header">
+                <span>🚫 Blocked</span>
+                <span class="column-count" id="col-blocked-count">0</span>
+            </div>
+            <div class="column-body" id="col-blocked">
+                <!-- Empty -->
+            </div>
+        </div>
+
+        <!-- Done Column -->
+        <div class="column">
+            <div class="column-header">
+                <span>✅ Done</span>
+                <span class="column-count" id="col-done-count">5</span>
+            </div>
+            <div class="column-body" id="col-done">
+                <div class="card" onclick="showTaskDetail('t_d4e5f6a7')" data-id="t_d4e5f6a7" style="opacity:0.7;">
+                    <div class="card-header">
+                        <span class="card-id">t_d4e5f6a7</span>
+                        <div class="card-priority priority-normal"></div>
+                    </div>
+                    <div class="card-title">Setup J1 Dev Ops team profiles and workspace</div>
+                    <div class="card-meta">
+                        <div class="card-assignee">
+                            <div class="assignee-avatar assignee-default">O</div>
+                            orchestrator
+                        </div>
+                        <span class="card-status-badge status-done">Done</span>
+                    </div>
+                </div>
+                <div class="card" onclick="showTaskDetail('t_e5f6a7b8')" data-id="t_e5f6a7b8" style="opacity:0.7;">
+                    <div class="card-header">
+                        <span class="card-id">t_e5f6a7b8</span>
+                        <div class="card-priority priority-normal"></div>
+                    </div>
+                    <div class="card-title">Create docker-compose.prod.yml with health checks</div>
+                    <div class="card-meta">
+                        <div class="card-assignee">
+                            <div class="assignee-avatar assignee-infra">I</div>
+                            infra-mgr
+                        </div>
+                        <span class="card-status-badge status-done">Done</span>
+                    </div>
+                </div>
+                <div class="card" onclick="showTaskDetail('t_f6a7b8c9')" data-id="t_f6a7b8c9" style="opacity:0.7;">
+                    <div class="card-header">
+                        <span class="card-id">t_f6a7b8c9</span>
+                        <div class="card-priority priority-normal"></div>
+                    </div>
+                    <div class="card-title">Add Freshdesk adapter to ticket_platforms</div>
+                    <div class="card-meta">
+                        <div class="card-assignee">
+                            <div class="assignee-avatar assignee-dev">D</div>
+                            agent-dev
+                        </div>
+                        <span class="card-status-badge status-done">Done</span>
+                    </div>
+                </div>
+                <div class="card" onclick="showTaskDetail('t_a7b8c9d0')" data-id="t_a7b8c9d0" style="opacity:0.7;">
+                    <div class="card-header">
+                        <span class="card-id">t_a7b8c9d0</span>
+                        <div class="card-priority priority-normal"></div>
+                    </div>
+                    <div class="card-title">Implement WhatsApp webhook with human takeover</div>
+                    <div class="card-meta">
+                        <div class="card-assignee">
+                            <div class="assignee-avatar assignee-dev">D</div>
+                            agent-dev
+                        </div>
+                        <span class="card-status-badge status-done">Done</span>
+                    </div>
+                </div>
+                <div class="card" onclick="showTaskDetail('t_b8c9d0e1')" data-id="t_b8c9d0e1" style="opacity:0.7;">
+                    <div class="card-header">
+                        <span class="card-id">t_b8c9d0e1</span>
+                        <div class="card-priority priority-normal"></div>
+                    </div>
+                    <div class="card-title">Build admin dashboard with real-time monitoring</div>
+                    <div class="card-meta">
+                        <div class="card-assignee">
+                            <div class="assignee-avatar assignee-dev">D</div>
+                            agent-dev
+                        </div>
+                        <span class="card-status-badge status-done">Done</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activity Feed -->
+    <div class="activity-feed">
+        <div class="activity-item">
+            <div class="activity-dot" style="background:var(--yellow);"></div>
+            <span>infra-mgr: Fixing SSL cert renewal (2h 15m)</span>
+        </div>
+        <div class="activity-item">
+            <div class="activity-dot" style="background:var(--green);"></div>
+            <span>agent-dev: Completed WhatsApp webhook ✓</span>
+        </div>
+        <div class="activity-item">
+            <div class="activity-dot" style="background:var(--green);"></div>
+            <span>qa-reviewer: Approved rate limiting PR ✓</span>
+        </div>
+    </div>
+
+    <!-- Task Detail Modal -->
+    <div class="modal-overlay" id="task-modal">
+        <div class="modal">
+            <h2 id="modal-title">Task Details</h2>
+            <div class="modal-row">
+                <span class="modal-label">ID</span>
+                <span class="modal-value" id="modal-id">—</span>
+            </div>
+            <div class="modal-row">
+                <span class="modal-label">Status</span>
+                <span class="modal-value" id="modal-status">—</span>
+            </div>
+            <div class="modal-row">
+                <span class="modal-label">Assignee</span>
+                <span class="modal-value" id="modal-assignee">—</span>
+            </div>
+            <div class="modal-row">
+                <span class="modal-label">Priority</span>
+                <span class="modal-value" id="modal-priority">—</span>
+            </div>
+            <div class="modal-row">
+                <span class="modal-label">Created</span>
+                <span class="modal-value" id="modal-created">—</span>
+            </div>
+            <div class="modal-row">
+                <span class="modal-label">Description</span>
+                <span class="modal-value" id="modal-body">—</span>
+            </div>
+            <button class="modal-close" onclick="closeModal()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        const taskData = {
+            't_a1b2c3d4': {
+                id: 't_a1b2c3d4',
+                title: 'Fix nginx SSL cert renewal for WhatsApp webhook',
+                status: 'Running',
+                assignee: 'infrastructure-manager',
+                priority: 'urgent',
+                created: '2 hours ago',
+                body: 'The SSL certificate for the WhatsApp webhook endpoint needs renewal. Configure certbot auto-renewal and update nginx config to support the webhook path /webhook/whatsapp with proper proxy headers.'
+            },
+            't_f4a2b1c3': {
+                id: 't_f4a2b1c3',
+                title: 'Add Freshdesk MCP server as Docker service',
+                status: 'Ready',
+                assignee: 'agent-developer',
+                priority: 'high',
+                created: '1 day ago',
+                body: 'Add the NeuraLegion/freshdesk_mcp server as a Docker service in docker-compose.yml. Configure FRESHDESK_DOMAIN and FRESHDESK_API_KEY environment variables. The MCP server provides 41 tools for ticket management.'
+            },
+            't_b7e5d2a1': {
+                id: 't_b7e5d2a1',
+                title: 'Write API documentation for WhatsApp webhook endpoints',
+                status: 'Ready',
+                assignee: 'docs-writer',
+                priority: 'normal',
+                created: '1 day ago',
+                body: 'Document all WhatsApp webhook endpoints: GET /webhook/whatsapp (verification), POST /webhook/whatsapp (message receiver), POST /admin/takeover/{phone}, POST /admin/resume/{phone}, GET /admin/queue. Include request/response examples.'
+            },
+            't_c8d3e4f5': {
+                id: 't_c8d3e4f5',
+                title: 'Security audit: rate limiting bypass attempts',
+                status: 'Ready',
+                assignee: 'qa-reviewer',
+                priority: 'normal',
+                created: '12 hours ago',
+                body: 'Test rate limiting middleware against bypass attempts: rapid requests, different IPs (X-Forwarded-For spoofing), concurrent sessions, long message flooding. Verify 429 responses are returned correctly.'
+            },
+            't_d4e5f6a7': {
+                id: 't_d4e5f6a7',
+                title: 'Setup J1 Dev Ops team profiles and workspace',
+                status: 'Done',
+                assignee: 'orchestrator',
+                priority: 'normal',
+                created: '3 days ago',
+                body: 'Created 4 specialist profiles (infrastructure-manager, agent-developer, qa-reviewer, docs-writer) with role-specific skills and system prompts. Set up kanban board for j1-devops project.'
+            },
+            't_e5f6a7b8': {
+                id: 't_e5f6a7b8',
+                title: 'Create docker-compose.prod.yml with health checks',
+                status: 'Done',
+                assignee: 'infrastructure-manager',
+                priority: 'normal',
+                created: '2 days ago',
+                body: 'Production override file with: health checks on all services, resource limits (RAM/CPU), restart policies, production logging levels, proper volume mounts.'
+            },
+            't_f6a7b8c9': {
+                id: 't_f6a7b8c9',
+                title: 'Add Freshdesk adapter to ticket_platforms',
+                status: 'Done',
+                assignee: 'agent-developer',
+                priority: 'normal',
+                created: '2 days ago',
+                body: 'Implemented FreshdeskAdapter class with create_ticket, update_ticket, search_tickets, close_ticket methods using Freshdesk REST API v2 with Basic Auth (base64 encoded API key).'
+            },
+            't_a7b8c9d0': {
+                id: 't_a7b8c9d0',
+                title: 'Implement WhatsApp webhook with human takeover',
+                status: 'Done',
+                assignee: 'agent-developer',
+                priority: 'normal',
+                created: '1 day ago',
+                body: 'Full WhatsApp Business API integration: webhook receiver with HMAC signature verification, intent detection (check tickets, create ticket, talk to human), session management via Redis, human queue with admin takeover/resume endpoints.'
+            },
+            't_b8c9d0e1': {
+                id: 't_b8c9d0e1',
+                title: 'Build admin dashboard with real-time monitoring',
+                status: 'Done',
+                assignee: 'agent-developer',
+                priority: 'normal',
+                created: '1 day ago',
+                body: 'Admin dashboard HTML/CSS/JS with: service health grid, ticket table, session monitoring, cost tracking, audit log, mobile-responsive PWA with bottom navigation, chart visualization.'
+            }
+        };
+
+        function showTaskDetail(taskId) {
+            const task = taskData[taskId];
+            if (!task) return;
+            document.getElementById('modal-id').textContent = task.id;
+            document.getElementById('modal-title').textContent = task.title;
+            document.getElementById('modal-status').textContent = task.status;
+            document.getElementById('modal-assignee').textContent = task.assignee;
+            document.getElementById('modal-priority').textContent = task.priority;
+            document.getElementById('modal-created').textContent = task.created;
+            document.getElementById('modal-body').textContent = task.body;
+            document.getElementById('task-modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('task-modal').classList.remove('active');
+        }
+
+        function refreshData() {
+            // In production this would fetch from Hermes kanban API
+            const event = new CustomEvent('kanban-refresh');
+            window.dispatchEvent(event);
+        }
+
+        function showNewTask() {
+            alert('Use `hermes kanban create "Task title" --assignee <profile>` to create new tasks, or use the Hermes dashboard.');
+        }
+
+        // Close modal on overlay click
+        document.getElementById('task-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        // Auto-refresh every 30s
+        setInterval(refreshData, 30000);
+    </script>
+</body>
+</html>
