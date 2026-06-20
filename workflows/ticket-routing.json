@@ -1,0 +1,80 @@
+{
+  "name": "Helpdesk - Smart Ticket Routing",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "webhook-trigger",
+      "name": "New Ticket Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "ticket-routing"
+    },
+    {
+      "parameters": {
+        "functionCode": "const ticket = $input.all()[0].json;\nconst subject = (ticket.subject || '').toLowerCase();\nconst body = (ticket.body || '').toLowerCase();\nconst text = subject + ' ' + body;\n\n// Simple keyword-based routing\nlet category = 'general';\nlet priority = 'normal';\n\nif (text.includes('billing') || text.includes('invoice') || text.includes('payment') || text.includes('charge')) {\n  category = 'billing';\n  priority = 'high';\n} else if (text.includes('urgent') || text.includes('down') || text.includes('outage') || text.includes('crash')) {\n  category = 'incident';\n  priority = 'urgent';\n} else if (text.includes('feature') || text.includes('request') || text.includes('add') || text.includes('new')) {\n  category = 'feature-request';\n  priority = 'low';\n} else if (text.includes('password') || text.includes('login') || text.includes('access') || text.includes('account')) {\n  category = 'account';\n  priority = 'normal';\n} else if (text.includes('bug') || text.includes('error') || text.includes('broken') || text.includes('not working')) {\n  category = 'bug';\n  priority = 'high';\n}\n\nreturn [{ json: { ...ticket, category, priority } }];"
+      },
+      "id": "classify-ticket",
+      "name": "Classify Ticket",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            { "value1": "={{ $json.priority }}", "operation": "equals", "value2": "urgent" }
+          ]
+        }
+      },
+      "id": "check-urgent",
+      "name": "Is Urgent?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "channel": "#helpdesk-urgent",
+        "text": "🚨 URGENT TICKET\n\n**Subject:** {{ $json.subject }}\n**Category:** {{ $json.category }}\n**From:** {{ $json.user_id }}\n\n{{ $json.body }}"
+      },
+      "id": "alert-urgent",
+      "name": "Alert Urgent",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2,
+      "position": [850, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $.env.HELPDESK_AGENT_URL }}/chat",
+        "jsonParameters": true,
+        "bodyParametersJson": "={{ JSON.stringify({ message: 'New ticket routed: ' + $json.subject + ' | Category: ' + $json.category + ' | Priority: ' + $json.priority, user_id: 'system', platform: 'internal' }) }}",
+        "options": {}
+      },
+      "id": "log-routing",
+      "name": "Log Routing Decision",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [850, 400]
+    }
+  ],
+  "connections": {
+    "New Ticket Webhook": {
+      "main": [[{ "node": "Classify Ticket", "type": "main", "index": 0 }]]
+    },
+    "Classify Ticket": {
+      "main": [[{ "node": "Is Urgent?", "type": "main", "index": 0 }]]
+    },
+    "Is Urgent?": {
+      "main": [
+        [{ "node": "Alert Urgent", "type": "main", "index": 0 }],
+        [{ "node": "Log Routing Decision", "type": "main", "index": 0 }]
+      ]
+    },
+    "Alert Urgent": {
+      "main": [[{ "node": "Log Routing Decision", "type": "main", "index": 0 }]]
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "J1 Helpdesk Admin",
+  "short_name": "J1 Helpdesk",
+  "description": "AI Helpdesk Admin Dashboard",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>", "sizes": "any" }
+  ]
+}

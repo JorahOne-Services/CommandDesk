@@ -1,0 +1,132 @@
+# ═══════════════════════════════════════════════════
+# MCP Server Registry
+# Pre-configured MCP server definitions for common platforms
+# ═══════════════════════════════════════════════════
+
+# Freshdesk (active — uses NeuraLegion/freshdesk_mcp)
+# 41 tools: tickets, contacts, companies, agents, KB, time tracking, canned responses
+freshdesk:
+  name: "Freshdesk"
+  description: "Full Freshdesk CRM integration via MCP"
+  repository: "NeuraLegion/freshdesk_mcp"
+  transport: stdio
+  command: "node"
+  args: ["/app/mcp-servers/freshdesk/dist/index.js"]
+  env:
+    FRESHDESK_DOMAIN: "${FRESHDESK_DOMAIN}"
+    FRESHDESK_API_KEY: "${FRESHDESK_API_KEY}"
+  tools_total: 41
+  categories:
+    - tickets
+    - contacts
+    - companies
+    - agents
+    - knowledge_base
+    - time_tracking
+    - canned_responses
+    - satisfaction_ratings
+    - system_config
+
+# osTicket (adapter-based — no MCP needed, uses REST API directly)
+# The osticket.py adapter handles all operations
+osticket:
+  name: "osTicket"
+  description: "Ticket management via osTicket REST API"
+  type: adapter
+  adapter_file: "ticket_platforms/osticket.py"
+  config:
+    url_env: "OSTICKET_BASE_URL"
+    key_env: "OSTICKET_API_KEY"
+  capabilities:
+    - create_ticket
+    - search_tickets
+    - update_ticket
+    - list_tickets
+    - add_note
+    - close_ticket
+
+# Zammad (adapter-based — uses REST API)
+zammad:
+  name: "Zammad"
+  description: "Ticket management via Zammad REST API"
+  type: adapter
+  adapter_file: "ticket_platforms/zammad.py"
+  config:
+    url_env: "ZAMMAD_BASE_URL"
+    token_env: "ZAMMAD_API_TOKEN"
+  capabilities:
+    - create_ticket
+    - search_tickets
+    - update_ticket
+    - list_tickets
+    - add_article
+    - close_ticket
+
+# Slack (optional — for notifications and agent communication)
+# Uses modelcontextprotocol/servers/src/slack
+slack:
+  name: "Slack"
+  description: "Send notifications and manage channels"
+  repository: "modelcontextprotocol/servers"
+  transport: stdio
+  command: "npx"
+  args: ["-y", "@modelcontextprotocol/server-slack"]
+  env:
+    SLACK_BOT_TOKEN: "${SLACK_BOT_TOKEN}"
+    SLACK_TEAM_ID: "${SLACK_TEAM_ID}"
+  tools:
+    - send_message
+    - list_channels
+    - list_users
+    - upload_file
+  optional: true
+
+# GitHub (optional — for issue tracking and documentation)
+# Uses github/github-mcp-server
+github:
+  name: "GitHub"
+  description: "Issue tracking, PRs, and repository management"
+  repository: "github/github-mcp-server"
+  transport: https
+  url: "https://api.github.com/mcp"
+  headers:
+    Authorization: "Bearer ${GITHUB_TOKEN}"
+    Accept: "application/json"
+  tools:
+    - create_issue
+    - list_issues
+    - get_issue
+    - create_pull_request
+    - search_repositories
+    - get_file_contents
+  optional: true
+
+# SearXNG (optional MCP — for structured search)
+# Can be used alongside the direct HTTP integration
+searxng:
+  name: "SearXNG"
+  description: "Self-hosted search via MCP"
+  type: http
+  url: "http://searxng:8080/search"
+  format: json
+  optional: true
+
+# PostgreSQL (optional MCP — for direct database queries)
+postgres:
+  name: "PostgreSQL"
+  description: "Database queries and management"
+  repository: "modelcontextprotocol/servers"
+  transport: stdio
+  command: "npx"
+  args: ["-y", "@modelcontextprotocol/server-postgresql"]
+  env:
+    POSTGRES_CONNECTION_STRING: "${POSTGRES_URL}"
+  tools:
+    - query
+    - list_tables
+    - get_table_schema
+  optional: true
+
+# Usage:
+# To enable an MCP server, add its config to config/mcp-config.yaml
+# and set the required environment variables in .env

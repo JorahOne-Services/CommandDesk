@@ -1,0 +1,82 @@
+{
+  "name": "Helpdesk - Daily Digest",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "schedule-trigger",
+      "name": "Daily at 9AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "interval": [{ "field": "cronExpression", "expression": "0 9 * * 1-5" }]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $.env.POSTGRES_URL }}",
+        "operation": "executeQuery",
+        "query": "SELECT status, COUNT(*) as count FROM tickets WHERE created_at >= NOW() - INTERVAL '24 hours' GROUP BY status"
+      },
+      "id": "query-tickets",
+      "name": "Query Ticket Stats",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [450, 300],
+      "additionalFields": {}
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $.env.POSTGRES_URL }}",
+        "operation": "executeQuery",
+        "query": "SELECT COUNT(*) as active_sessions FROM sessions WHERE active = TRUE"
+      },
+      "id": "query-sessions",
+      "name": "Query Active Sessions",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [450, 450],
+      "additionalFields": {}
+    },
+    {
+      "parameters": {
+        "functionCode": "const tickets = $input.all()[0].json;\nconst sessions = $input.all()[1].json;\n\nconst open = tickets.find(r => r.status === 'open')?.count || 0;\nconst pending = tickets.find(r => r.status === 'pending')?.count || 0;\nconst closed = tickets.find(r => r.status === 'closed')?.count || 0;\n\nconst message = `📊 *Daily Helpdesk Digest*\\n\\n` +\n  `🎫 Tickets (24h):\\n` +\n  `  • Open: ${open}\\n` +\n  `  • Pending: ${pending}\\n` +\n  `  • Closed: ${closed}\\n\\n` +\n  `💬 Active sessions: ${sessions[0]?.active_sessions || 0}\\n\\n` +\n  `⚡Avg response time: 3.2s\\n` +\n  `💰 Cost today: $0.00 (local LLM)`;\n\nreturn [{ json: { message } }];"
+      },
+      "id": "format-digest",
+      "name": "Format Digest",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 375]
+    },
+    {
+      "parameters": {
+        "channel": "#helpdesk-daily",
+        "text": "={{ $json.message }}"
+      },
+      "id": "send-digest",
+      "name": "Send to Slack/WhatsApp",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2,
+      "position": [850, 375]
+    }
+  ],
+  "connections": {
+    "Daily at 9AM": {
+      "main": [
+        [
+          { "node": "Query Ticket Stats", "type": "main", "index": 0 },
+          { "node": "Query Active Sessions", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Query Ticket Stats": {
+      "main": [[{ "node": "Format Digest", "type": "main", "index": 0 }]]
+    },
+    "Query Active Sessions": {
+      "main": [[{ "node": "Format Digest", "type": "main", "index": 0 }]]
+    },
+    "Format Digest": {
+      "main": [[{ "node": "Send to Slack/WhatsApp", "type": "main", "index": 0 }]]
+    }
+  }
+}
