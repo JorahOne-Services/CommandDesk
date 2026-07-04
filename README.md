@@ -1,120 +1,80 @@
-# CommandDesk (CommandDesk)
+<div align="center">
+  <img src="https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white">
+  <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white">
+  <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white">
+  <img src="https://img.shields.io/badge/AI-FF6F00?style=for-the-badge&logo=openai&logoColor=white">
+</div>
 
-**Version:** v0.1  
-**Status:** Active Development  
-**Repository:** https://github.com/OneByJorah/CommandDesk
+<br>
 
----
-
-## Table of Contents
-
-- [Overview](#overview)
-- [Architecture](#architecture)
-- [Technology Stack](#technology-stack)
-- [Features](#features)
-- [Getting Started](#getting-started)
-- [Service Management](#service-management)
-- [Project Structure](#project-structure)
-- [Screenshots](#screenshots)
-- [Contributing](#contributing)
-- [License](#license)
-- [Author](#author)
-
----
-
-## Overview
-
-Helpdesk and NOC operations dashboard with ticket tracking and system monitoring.
+<div align="center">
+  <h1>🎫 CommandDesk</h1>
+  <p><strong>Self-Hosted AI Helpdesk Agent</strong></p>
+  <p>100% local, free AI-powered helpdesk with multi-platform ticketing, knowledge base, and multi-channel communication</p>
+  <p>
+    <a href="#-features">Features</a> •
+    <a href="#-quick-start">Quick Start</a> •
+    <a href="#-architecture">Architecture</a> •
+    <a href="#-integrations">Integrations</a>
+  </p>
+</div>
 
 ---
 
-## Architecture
+## ✨ Features
 
-Client → Local service (`CommandDesk`) → data/processing modules → output/api layer.
-Secrets and environment configuration are managed via environment files with restrictive permissions.
+- **AI-Powered Ticketing** — Auto-respond, triage, and resolve tickets via AI
+- **Multi-Platform Support** — osTicket, Freshdesk, Zammad adapters
+- **Multi-Channel** — WhatsApp, Email (IMAP), and web interface
+- **Knowledge Base** — ChromaDB semantic search for instant answers
+- **Admin Dashboard** — Analytics, human takeover, and management
+- **Security** — Rate limiting, content filtering, PII detection
+- **Workflow Automation** — n8n integration for complex workflows
+- **Plug-in Architecture** — Extend with custom adapters and tools
 
----
-
-## Technology Stack
-
-|| Layer | Stack |
-|---|---|
-| Runtime | Linux (Ubuntu 22.04+) |
-| Primary Stack | HTML5 / Python / systemd |
-| VCS | Git + GitHub (`github.com/OneByJorah/CommandDesk`) |
-| Dev Port | Localhost / systemd service |
-
----
-
-## Features
-
-- Operational dashboard and monitoring (per repo).
-- Exportable data / reports where supported.
-- Extensible service-based design.
-- Dark-themed UI where applicable.
-
----
-
-## Getting Started
+## 🚀 Quick Start
 
 ```bash
-# 1. Clone the repository
 git clone https://github.com/OneByJorah/CommandDesk.git
 cd CommandDesk
-
-# 2. Install dependencies
-# (see specific subproject docs)
-
-# 3. Start the service
-# (see Service Management below)
+docker-compose up -d
 ```
 
----
-
-## Service Management
-
-```bash
-# Start the service (example)
-sudo systemctl start CommandDesk.service
-sudo systemctl enable CommandDesk.service
-```
-
-Access the service via your configured localhost port or reverse proxy.
-
----
-
-## Project Structure
+## 🏗️ Architecture
 
 ```
 CommandDesk/
-├── README.md
-├── (additional project files)
+├── admin/                    # Admin dashboard
+├── compose/                  # Docker Compose configs
+├── config/                   # Application configuration
+├── scripts/                  # Utility scripts
+├── skills/                   # AI agent skills
+├── ticket_platforms/         # osTicket, Freshdesk, Zammad
+├── tools-ui/                 # Web UI components
+├── workflows/                # n8n workflow definitions
+├── Dockerfile                # Backend Docker image
+├── docker-compose.yml        # Main deployment
+└── requirements.txt          # Python dependencies
 ```
 
----
+## 📡 Integrations
 
-## Screenshots
+| Platform | Type | Description |
+|----------|------|-------------|
+| osTicket | Ticketing | Open-source ticket system adapter |
+| Freshdesk | Ticketing | Cloud-based ticketing |
+| Zammad | Ticketing | Open-source support system |
+| WhatsApp | Channel | WhatsApp messaging |
+| Email | Channel | IMAP email-to-ticket |
+| ChromaDB | Knowledge | Vector search for KB |
 
-All screenshots are live captures from the local dev instance.
+## 📄 License
 
-_(Screenshots will be added after build/run capture.)_
-
----
-
-## Contributing
-
-1. Create a feature branch off `main`.
-2. Follow the existing code style.
-3. Submit a PR with description and screenshots for UI changes.
-
----
-
-## License
-
-MIT
+MIT © Jhonattan L. Jimenez
 
 ---
 
-## Author
-
-Built by **Jhonattan L. Jimenez**.
+<div align="center">
+  <p>🤖 Your AI helpdesk, fully self-hosted</p>
+  <p><a href="https://github.com/OneByJorah">@OneByJorah</a></p>
+</div>
