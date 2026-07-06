@@ -4,9 +4,8 @@ Enforces per-session request limits and session duration.
 """
 from __future__ import annotations
 
-import time
 import logging
-from typing import Optional
+import time
 from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
@@ -37,7 +36,7 @@ class RateLimiter:
     def __init__(self, config: RateLimitConfig, redis_client=None):
         self.config = config
         self.redis = redis_client
-        self._sessions: dict[str, SessionState] =()
+        self._sessions: dict[str, SessionState] = {}
 
     def check_request(self, session_id: str, user_id: str, message_length: int = 0) -> dict:
         """
@@ -101,7 +100,7 @@ class RateLimiter:
             "session_remaining": int(self.config.max_session_duration - session_age),
         }
 
-    def get_session_info(self, session_id: str) -> Optional[dict]:
+    def get_session_info(self, session_id: str) -> dict | None:
         """Get current session info."""
         state = self._sessions.get(session_id)
         if not state:

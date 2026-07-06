@@ -7,8 +7,7 @@ from __future__ import annotations
 import json
 import logging
 import time
-from typing import Optional
-from dataclasses import dataclass, asdict
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +22,6 @@ class SessionManager:
 
     async def create_session(self, user_id: str, platform: str = "web", ip: str = None) -> dict:
         """Create a new session."""
-        import uuid
         session_id = str(uuid.uuid4())
         now = time.time()
         expires_at = now + self.max_duration
@@ -48,13 +46,13 @@ class SessionManager:
             async with self.pg_pool.acquire() as conn:
                 await conn.execute(
                     """INSERT INTO sessions (id, user_id, platform, message_count, started_at, expires_at, active, ip_address)
-                       VALUES ($1, $2, $3, $4, NOW(), NOW() + INTERVAL '{} seconds', TRUE, $5::inet)""".format(self.max_duration),
-                    session_id, user_id, platform, 0, ip
+                       VALUES ($1, $2, $3, $4, NOW(), NOW() + MAKE_INTERVAL(secs => $5), TRUE, $6::inet)""",
+                    session_id, user_id, platform, 0, self.max_duration, ip,
                 )
 
         return session_data
 
-    async def get_session(self, session_id: str) -> Optional[dict]:
+    async def get_session(self, session_id: str) -> dict | None:
         """Get session data."""
         key = f"session:{session_id}"
         data = await self.redis.get(key)
@@ -86,28 +84,36 @@ class SessionManager:
             async with self.pg_pool.acquire() as conn:
                 await conn.execute(
                     "UPDATE sessions SET active = FALSE WHERE id = $1",
-                    session_id
+                    session_id,
                 )
 
     async def get_active_count(self) -> int:
-        """Get count of active sessions."""
-        keys = await self.redis.keys("session:*")
+        """Get count of active sessions using SCAN (avoid O(N) KEYS)."""
         count = 0
-        for key in keys:
-            data = await self.redis.get(key)
-            if data:
-                session = json.loads(data)
-                if session.get("active"):
-                    count += 1
+        cursor = 0
+        while True:
+            cursor, keys = await self.redis.scan(cursor, match="session:*", count=1000)
+            for key in keys:
+                data = await self.redis.get(key)
+                if data:
+                    session = json.loads(data)
+                    if session.get("active"):
+                        count += 1
+            if cursor == 0:
+                break
         return count
 
     async def cleanup_expired(self):
-        """Remove expired sessions."""
-        keys = await self.redis.keys("session:*")
+        """Remove expired sessions using SCAN (avoid O(N) KEYS)."""
         removed = 0
-        for key in keys:
-            ttl = await self.redis.ttl(key)
-            if ttl < 0:
-                await self.redis.delete(key)
-                removed += 1
+        cursor = 0
+        while True:
+            cursor, keys = await self.redis.scan(cursor, match="session:*", count=1000)
+            for key in keys:
+                ttl = await self.redis.ttl(key)
+                if ttl < 0:
+                    await self.redis.delete(key)
+                    removed += 1
+            if cursor == 0:
+                break
         return removed

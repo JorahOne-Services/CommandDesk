@@ -7,13 +7,11 @@ from __future__ import annotations
 
 import email
 import imaplib
-import json
 import logging
 import os
 import time
 import uuid
 from email.header import decode_header
-from typing import Optional
 
 import httpx
 
@@ -68,7 +66,7 @@ def extract_email_body(msg) -> str:
     return body[:10000]  # Limit to 10KB
 
 
-def process_email(mail: imaplib.IMAP4_SSL, num: str) -> Optional[dict]:
+def process_email(mail: imaplib.IMAP4_SSL, num: str) -> dict | None:
     """Process a single email and create ticket."""
     try:
         status, data = mail.fetch(num, "(RFC822)")
@@ -88,20 +86,20 @@ def process_email(mail: imaplib.IMAP4_SSL, num: str) -> Optional[dict]:
 
         logger.info(f"Processing email: {subject[:50]} from {email_addr}")
 
-        # Create ticket via helpdesk agent API
+        # Create ticket via helpdesk agent /chat endpoint
         ticket_data = {
-            "subject": subject,
-            "body": body,
-            "user_email": email_addr,
+            "user_id": email_addr,
+            "message": f"New ticket from {email_addr}: {subject}\
+\
+{body}",
             "platform": TICKET_PLATFORM,
-            "message_id": message_id,
         }
 
         with httpx.Client(timeout=30) as client:
-            resp = client.post(f"{HELPDESK_AGENT_URL}/tickets/create", json=ticket_data)
+            resp = client.post(f"{HELPDESK_AGENT_URL}/chat", json=ticket_data)
             if resp.status_code == 200:
                 result = resp.json()
-                logger.info(f"Ticket created: {result.get('ticket_id')}")
+                logger.info(f"Email processed: {subject[:50]} -> session {result.get('session_id', 'N/A')}")
                 return result
             else:
                 logger.warning(f"Ticket creation failed: {resp.status_code} {resp.text[:200]}")

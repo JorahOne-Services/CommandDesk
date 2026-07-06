@@ -10,12 +10,11 @@ import asyncio
 import json
 import os
 import sys
-from datetime import datetime, timedelta
-from typing import Optional
+from datetime import datetime
 
 import asyncpg
 
-POSTGRES_URL = os.getenv("POSTGRES_URL", "postgresql://helpdesk:***@postgres:5432/helpdesk")
+POSTGRES_URL = os.getenv("POSTGRES_URL", "")  # Must be set via environment variable
 
 
 async def get_token_usage(pool, hours: int = 24) -> dict:
