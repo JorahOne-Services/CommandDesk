@@ -22,6 +22,10 @@
 
 ---
 
+## 📸 Screenshot
+
+This is a CLI/backend-only tool. No screenshots available.
+
 ## ✨ Features
 
 - **AI-Powered Ticketing** — Auto-respond, triage, and resolve tickets via local LLMs
