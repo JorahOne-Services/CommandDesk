@@ -1,137 +1,272 @@
 <div align="center">
-  <img src="https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white">
-  <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white">
-  <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white">
-  <img src="https://img.shields.io/badge/AI-FF6F00?style=for-the-badge&logo=openai&logoColor=white">
-  <img src="https://img.shields.io/badge/license-MIT-blue?style=for-the-badge">
-</div>
 
-<br>
+  <img src="https://raw.githubusercontent.com/OneByJorah/CommandDesk/main/docs/logo.png" alt="CommandDesk Logo" width="120">
 
-<div align="center">
-  <h1>🎫 CommandDesk</h1>
-  <p><strong>Self-Hosted AI Helpdesk Agent</strong></p>
-  <p>100% local, AI-powered helpdesk with multi-platform ticketing, knowledge base, and multi-channel communication</p>
-  <p>
-    <a href="#-features">Features</a> •
-    <a href="#-quick-start">Quick Start</a> •
-    <a href="#-architecture">Architecture</a> •
-    <a href="#-integrations">Integrations</a>
-  </p>
+  # 🎫 CommandDesk
+
+  **Self-Hosted AI Helpdesk Agent**
+
+  Multi-platform ticketing, email-to-ticket, admin dashboard with live cost tracking
+
+  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+  [![Python 3.10+](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat&logo=python&logoColor=white)](https://www.python.org/)
+  [![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+  [![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)](https://www.docker.com/)
+  [![AI-Powered](https://img.shields.io/badge/AI-Powered-9B59B6?style=flat&logo=openai&logoColor=white)](https://openai.com/)
+
+  [Features](#-features) • [Quick Start](#-quick-start) • [Architecture](#-architecture) • [API](#-api-reference) • [Contributing](#-contributing)
+
 </div>
 
 ---
 
-## 📸 Screenshot
+## 📸 Screenshots
 
-This is a CLI/backend-only tool. No screenshots available.
+<div align="center">
+
+| Ticket Dashboard | AI Assistant | Cost Tracker |
+|------------------|--------------|--------------|
+| ![Dashboard](docs/screenshots/dashboard.png) | ![AI](docs/screenshots/ai-assistant.png) | ![Costs](docs/screenshots/costs.png) |
+
+</div>
+
+> 💡 **Tip:** CommandDesk uses AI to automatically categorize, prioritize, and respond to tickets
+
+---
 
 ## ✨ Features
 
-- **AI-Powered Ticketing** — Auto-respond, triage, and resolve tickets via local LLMs
-- **Multi-Platform Support** — osTicket, Freshdesk, Zammad adapters
-- **Multi-Channel** — WhatsApp, Email (IMAP), and web interface
-- **Knowledge Base** — ChromaDB semantic search for instant answers
-- **Admin Dashboard** — Analytics, human takeover, and management
-- **Security** — Rate limiting, content filtering, PII detection
-- **Workflow Automation** — n8n integration for complex automation
-- **Plug-in Architecture** — Extend with custom adapters and tools
+| Feature | Description |
+|---------|-------------|
+| 🎫 **Multi-Platform Ticketing** | Email, WhatsApp, Telegram, Web |
+| 🤖 **AI Auto-Response** | Intelligent ticket routing and responses |
+| 📧 **Email-to-Ticket** | Automatic ticket creation from emails |
+| 💰 **Cost Tracking** | Real-time AI usage cost monitoring |
+| 📊 **Analytics Dashboard** | Ticket metrics and performance stats |
+| 🔐 **Role-Based Access** | Admin, Agent, User roles |
+| 🐳 **Docker Ready** | One-command deployment |
+| 🔌 **Plugin System** | Extend with custom integrations |
+
+---
 
 ## 🚀 Quick Start
 
+### Prerequisites
+
+- Docker & Docker Compose
+- Git
+- SMTP server for email integration (optional)
+
+### Installation
+
 ```bash
+# Clone the repository
 git clone https://github.com/OneByJorah/CommandDesk.git
 cd CommandDesk
-cp .env.example .env
-# Edit .env with your configuration
+
+# Start with Docker
 docker compose up -d
 ```
+
+### Access the Dashboard
+
+Open **http://localhost:8080** in your browser
+
+### Default Credentials
+
+- **Admin:** admin@commanddesk.local / admin
+- **Agent:** agent@commanddesk.local / agent
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `CD_PORT` | `8080` | Dashboard port |
+| `DATABASE_URL` | `sqlite:///./commanddesk.db` | Database URL |
+| `SMTP_HOST` | - | SMTP server |
+| `SMTP_PORT` | `587` | SMTP port |
+| `OPENAI_API_KEY` | - | OpenAI API key |
+| `WHATSAPP_TOKEN` | - | WhatsApp Business API |
+
+---
 
 ## 🏗️ Architecture
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│                     CommandDesk                          │
-│                                                          │
-│  ┌─────────────┐  ┌─────────────┐  ┌──────────────────┐ │
-│  │   Ticket    │  │    AI       │  │   Knowledge      │ │
-│  │  Platforms  │  │   Engine    │  │     Base         │ │
-│  │  osTicket   │  │   Ollama    │  │   ChromaDB       │ │
-│  │  Freshdesk  │  │   llama.cpp │  │   Qdrant         │ │
-│  │  Zammad     │  │   OpenAI    │  │                  │ │
-│  └──────┬──────┘  └──────┬──────┘  └────────┬─────────┘ │
-│         │                │                   │           │
-│         └────────────────┼───────────────────┘           │
-│                          ▼                               │
-│              ┌──────────────────────┐                     │
-│              │  Communication Layer │                     │
-│              │  WhatsApp · Email ·  │                     │
-│              │  Web Interface       │                     │
-│              └──────────────────────┘                     │
-└──────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                     CommandDesk                             │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│   ┌──────────┐      ┌──────────┐      ┌──────────────┐    │
+│   │ Browser  │ ───▶ │  Nginx   │ ───▶ │ FastAPI      │    │
+│   └──────────┘      └──────────┘      └──────┬───────┘    │
+│                                               │             │
+│                                   ┌───────────┴──────────┐ │
+│                                   │                      │ │
+│                        ┌──────────┴──────────┐           │ │
+│                        │                     │           │ │
+│                        ▼                     ▼           │ │
+│                 ┌──────────┐          ┌──────────┐      │ │
+│                 │  Ticket  │          │ AI Agent │      │ │
+│                 │  Engine  │          │ Gateway  │      │ │
+│                 └──────────┘          └──────────┘      │ │
+│                                                           │ │
+│  ┌─────────────────────────────────────────────────────┐ │ │
+│  │              Communication Channels                 │ │ │
+│  │  ┌───────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐ │ │ │
+│  │  │ Email │  │WhatsApp │  │Telegram │  │   Web   │ │ │ │
+│  │  │  SMTP │  │  API    │  │   Bot   │  │  Forms  │ │ │ │
+│  │  └───────┘  └─────────┘  └─────────┘  └─────────┘ │ │ │
+│  └─────────────────────────────────────────────────────┘ │
+│                                                           │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-## 📡 Integrations
+### Tech Stack
 
-| Platform | Type | Description |
-|----------|------|-------------|
-| **osTicket** | Ticketing | Open-source ticket system adapter |
-| **Freshdesk** | Ticketing | Cloud-based ticketing |
-| **Zammad** | Ticketing | Open-source support system |
-| **WhatsApp** | Channel | WhatsApp messaging integration |
-| **Email (IMAP)** | Channel | Email-to-ticket conversion |
-| **ChromaDB** | Knowledge | Vector search for knowledge base |
-| **n8n** | Automation | Workflow automation |
+| Component | Technology |
+|-----------|------------|
+| **Backend** | Python 3.10+, FastAPI, SQLAlchemy |
+| **Frontend** | HTML5, CSS3, JavaScript |
+| **Database** | SQLite / PostgreSQL |
+| **AI/ML** | OpenAI API, LangChain |
+| **Integrations** | SMTP, WhatsApp Business, Telegram |
+| **Deployment** | Docker Compose |
 
-## 🐳 Docker Compose
-
-```bash
-# Start with AI engine
-docker compose up -d
-
-# Start with development config
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
-
-# View logs
-docker compose logs -f
-
-# Stop
-docker compose down
-```
+---
 
 ## 📁 Project Structure
 
 ```
 CommandDesk/
-├── admin/                 # Admin dashboard
-├── compose/               # Docker Compose configs
-├── config/                # Application configuration
-├── scripts/               # Utility scripts
-├── skills/                # AI agent skills
-├── ticket_platforms/      # osTicket, Freshdesk, Zammad adapters
-├── tools-ui/              # Web UI components
-├── Dockerfile             # Backend Docker image
-├── Dockerfile.email       # Email service image
-├── Dockerfile.whatsapp    # WhatsApp service image
-├── docker-compose.yml     # Main deployment
-├── Makefile               # Build automation
-└── requirements.txt       # Python dependencies
+├── backend/                  # FastAPI backend
+│   ├── main.py              # Application entry
+│   ├── routers/             # API routes
+│   │   ├── tickets.py       # Ticket management
+│   │   ├── ai.py            # AI agent endpoints
+│   │   └── analytics.py     # Analytics & costs
+│   ├── services/            # Business logic
+│   │   ├── ticket_engine.py # Ticket processing
+│   │   ├── ai_agent.py      # AI response agent
+│   │   └── channels/        # Communication channels
+│   │       ├── email.py     # Email integration
+│   │       ├── whatsapp.py  # WhatsApp integration
+│   │       └── telegram.py  # Telegram integration
+│   └── models/              # Data models
+├── frontend/                # Dashboard UI
+├── plugins/                 # Plugin system
+├── docs/                    # Documentation
+│   └── screenshots/         # Dashboard screenshots
+├── docker-compose.yml       # Docker deployment
+└── requirements.txt         # Python dependencies
 ```
 
-## 🔒 Security
+---
 
-- Rate limiting on all API endpoints
-- Content filtering for malicious payloads
-- PII detection and redaction
-- Environment-based configuration (`.env` never committed)
+## 🔌 API Reference
+
+### Tickets
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/tickets` | `GET` | List tickets |
+| `/api/tickets` | `POST` | Create ticket |
+| `/api/tickets/<id>` | `GET` | Get ticket details |
+| `/api/tickets/<id>/update` | `PUT` | Update ticket |
+| `/api/tickets/<id>/close` | `POST` | Close ticket |
+
+### AI Agent
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/ai/analyze` | `POST` | Analyze ticket with AI |
+| `/api/ai/respond` | `POST` | Generate AI response |
+| `/api/ai/costs` | `GET` | Get AI usage costs |
+
+### Analytics
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/analytics/overview` | `GET` | Dashboard overview |
+| `/api/analytics/tickets` | `GET` | Ticket statistics |
+| `/api/analytics/performance` | `GET` | Agent performance |
+
+### Example Usage
+
+```bash
+# Create a ticket
+curl -X POST http://localhost:8080/api/tickets \
+  -H "Content-Type: application/json" \
+  -d '{"subject": "Login issue", "body": "Cannot login to my account", "source": "email"}'
+
+# Get AI analysis
+curl -X POST http://localhost:8080/api/ai/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"ticket_id": 123}'
+
+# Get cost summary
+curl http://localhost:8080/api/ai/costs?period=30d
+```
+
+---
+
+## 🛠️ Development
+
+### Local Development
+
+```bash
+# Clone the repository
+git clone https://github.com/OneByJorah/CommandDesk.git
+cd CommandDesk
+
+# Backend setup
+cd backend
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+# Start development server
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+### Running Tests
+
+```bash
+pytest
+```
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+---
 
 ## 📄 License
 
-MIT © Jhonattan L. Jimenez
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🔒 Security
+
+For security concerns, please see [SECURITY.md](SECURITY.md).
+
+---
+
+## 💬 Support
+
+- 📧 Email: support@jorah.one
+- 🐛 Issues: [GitHub Issues](https://github.com/OneByJorah/CommandDesk/issues)
+- 📖 Docs: [Documentation](docs/)
 
 ---
 
 <div align="center">
-  <p>🤖 AI-powered helpdesk, fully self-hosted</p>
-  <p><a href="https://github.com/OneByJorah">@OneByJorah</a></p>
+
+  **Built with ❤️ by [Jhonattan L. Jimenez](https://github.com/OneByJorah)**
+
+  [⬆ Back to Top](#-commanddesk)
+
 </div>
